@@ -34,6 +34,9 @@
             this.Xml = new System.Windows.Forms.Timer(this.components);
             this.Time = new System.Windows.Forms.Timer(this.components);
             this.LabelMove = new System.Windows.Forms.Timer(this.components);
+            this.TelopHide = new System.Windows.Forms.Label();
+            this.NowTime = new System.Windows.Forms.Label();
+            this.TimeCheck = new System.Windows.Forms.Timer(this.components);
             this.SuspendLayout();
             // 
             // Title
@@ -65,7 +68,6 @@
             // 
             // Time
             // 
-            this.Time.Enabled = true;
             this.Time.Interval = 1000;
             this.Time.Tick += new System.EventHandler(this.Time_Tick);
             // 
@@ -75,12 +77,38 @@
             this.LabelMove.Interval = 50;
             this.LabelMove.Tick += new System.EventHandler(this.Move_Tick);
             // 
+            // TelopHide
+            // 
+            this.TelopHide.BackColor = System.Drawing.Color.Black;
+            this.TelopHide.Location = new System.Drawing.Point(0, 0);
+            this.TelopHide.Name = "TelopHide";
+            this.TelopHide.Size = new System.Drawing.Size(1280, 72);
+            this.TelopHide.TabIndex = 2;
+            // 
+            // NowTime
+            // 
+            this.NowTime.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(150)))));
+            this.NowTime.Font = new System.Drawing.Font("Koruri Regular", 18F);
+            this.NowTime.Location = new System.Drawing.Point(1030, 0);
+            this.NowTime.Name = "NowTime";
+            this.NowTime.Size = new System.Drawing.Size(250, 32);
+            this.NowTime.TabIndex = 3;
+            this.NowTime.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            // 
+            // TimeCheck
+            // 
+            this.TimeCheck.Enabled = true;
+            this.TimeCheck.Interval = 1;
+            this.TimeCheck.Tick += new System.EventHandler(this.TimeCheck_Tick);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(23F, 56F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.Blue;
             this.ClientSize = new System.Drawing.Size(1280, 72);
+            this.Controls.Add(this.TelopHide);
+            this.Controls.Add(this.NowTime);
             this.Controls.Add(this.Title);
             this.Controls.Add(this.MainText);
             this.Font = new System.Drawing.Font("Koruri Regular", 30F);
@@ -102,6 +130,9 @@
         private System.Windows.Forms.Timer Xml;
         private System.Windows.Forms.Timer Time;
         private System.Windows.Forms.Timer LabelMove;
+        private System.Windows.Forms.Label TelopHide;
+        private System.Windows.Forms.Label NowTime;
+        private System.Windows.Forms.Timer TimeCheck;
     }
 }
 
