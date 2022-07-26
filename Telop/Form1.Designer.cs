@@ -1,0 +1,107 @@
+﻿namespace Telop
+{
+    partial class Form1
+    {
+        /// <summary>
+        /// 必要なデザイナー変数です。
+        /// </summary>
+        private System.ComponentModel.IContainer components = null;
+
+        /// <summary>
+        /// 使用中のリソースをすべてクリーンアップします。
+        /// </summary>
+        /// <param name="disposing">マネージド リソースを破棄する場合は true を指定し、その他の場合は false を指定します。</param>
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing && (components != null))
+            {
+                components.Dispose();
+            }
+            base.Dispose(disposing);
+        }
+
+        #region Windows フォーム デザイナーで生成されたコード
+
+        /// <summary>
+        /// デザイナー サポートに必要なメソッドです。このメソッドの内容を
+        /// コード エディターで変更しないでください。
+        /// </summary>
+        private void InitializeComponent()
+        {
+            this.components = new System.ComponentModel.Container();
+            this.Title = new System.Windows.Forms.Label();
+            this.MainText = new System.Windows.Forms.Label();
+            this.Xml = new System.Windows.Forms.Timer(this.components);
+            this.Time = new System.Windows.Forms.Timer(this.components);
+            this.LabelMove = new System.Windows.Forms.Timer(this.components);
+            this.SuspendLayout();
+            // 
+            // Title
+            // 
+            this.Title.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(200)))));
+            this.Title.Font = new System.Drawing.Font("Koruri Regular", 18F);
+            this.Title.Location = new System.Drawing.Point(0, 0);
+            this.Title.Margin = new System.Windows.Forms.Padding(10, 0, 10, 0);
+            this.Title.Name = "Title";
+            this.Title.Size = new System.Drawing.Size(1280, 32);
+            this.Title.TabIndex = 0;
+            // 
+            // MainText
+            // 
+            this.MainText.AutoSize = true;
+            this.MainText.BackColor = System.Drawing.Color.Blue;
+            this.MainText.Font = new System.Drawing.Font("Koruri Regular", 20F);
+            this.MainText.Location = new System.Drawing.Point(0, 32);
+            this.MainText.Margin = new System.Windows.Forms.Padding(0);
+            this.MainText.Name = "MainText";
+            this.MainText.Size = new System.Drawing.Size(0, 38);
+            this.MainText.TabIndex = 1;
+            // 
+            // Xml
+            // 
+            this.Xml.Enabled = true;
+            this.Xml.Interval = 500;
+            this.Xml.Tick += new System.EventHandler(this.Xml_Tick);
+            // 
+            // Time
+            // 
+            this.Time.Enabled = true;
+            this.Time.Interval = 1000;
+            this.Time.Tick += new System.EventHandler(this.Time_Tick);
+            // 
+            // LabelMove
+            // 
+            this.LabelMove.Enabled = true;
+            this.LabelMove.Interval = 50;
+            this.LabelMove.Tick += new System.EventHandler(this.Move_Tick);
+            // 
+            // Form1
+            // 
+            this.AutoScaleDimensions = new System.Drawing.SizeF(23F, 56F);
+            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.BackColor = System.Drawing.Color.Blue;
+            this.ClientSize = new System.Drawing.Size(1280, 72);
+            this.Controls.Add(this.Title);
+            this.Controls.Add(this.MainText);
+            this.Font = new System.Drawing.Font("Koruri Regular", 30F);
+            this.ForeColor = System.Drawing.Color.White;
+            this.Margin = new System.Windows.Forms.Padding(13);
+            this.MaximumSize = new System.Drawing.Size(1296, 111);
+            this.MinimumSize = new System.Drawing.Size(1296, 111);
+            this.Name = "Form1";
+            this.Text = "Telop";
+            this.ResumeLayout(false);
+            this.PerformLayout();
+
+        }
+
+        #endregion
+
+        private System.Windows.Forms.Label Title;
+        private System.Windows.Forms.Label MainText;
+        private System.Windows.Forms.Timer Xml;
+        private System.Windows.Forms.Timer Time;
+        private System.Windows.Forms.Timer LabelMove;
+    }
+}
+
