@@ -59,74 +59,28 @@ namespace Telop
                                 Console.WriteLine(EqVolXML.Element("title").Value);*/
             }//xml linq
             Xml.Interval = 60000;
-            ////json変換
             XmlDocument XmlDocument_Main = new XmlDocument();
             XmlDocument_Main.Load("https://www.data.jma.go.jp/developer/xml/feed/eqvol.xml");
             string JsonText_Main = JsonConvert.SerializeXmlNode(XmlDocument_Main);
             JMAxml_EqVol_Main.JMAXML EqVol_Main = JsonConvert.DeserializeObject<JMAxml_EqVol_Main.JMAXML>(JsonText_Main);
 
-            EqVolClassMain EqVolMain = new EqVolClassMain();
-            List<EqVolClassMain> EqVolMain_forViewer = new List<EqVolClassMain>
+            EqVolClassMain EqVolMain = new EqVolClassMain
             {
-                new EqVolClassMain(),
-                new EqVolClassMain(),
-                new EqVolClassMain(),
-                new EqVolClassMain(),
-                new EqVolClassMain(),
-                new EqVolClassMain(),
-                new EqVolClassMain(),
-                new EqVolClassMain(),
-                new EqVolClassMain(),
-                new EqVolClassMain(),
-                new EqVolClassMain(),
-                new EqVolClassMain(),
-                new EqVolClassMain(),
-                new EqVolClassMain(),
-                new EqVolClassMain(),
-                new EqVolClassMain(),
-                new EqVolClassMain(),
-                new EqVolClassMain(),
-                new EqVolClassMain(),
-                new EqVolClassMain(),
-                new EqVolClassMain(),
-                new EqVolClassMain(),
-                new EqVolClassMain(),
-                new EqVolClassMain(),
-                new EqVolClassMain(),
-                new EqVolClassMain(),
-                new EqVolClassMain(),
-                new EqVolClassMain(),
-                new EqVolClassMain(),
-                new EqVolClassMain(),
-                new EqVolClassMain(),
-                new EqVolClassMain(),
-                new EqVolClassMain(),
-                new EqVolClassMain(),
-                new EqVolClassMain(),
-                new EqVolClassMain(),
-                new EqVolClassMain(),
-                new EqVolClassMain(),
-                new EqVolClassMain(),
-                new EqVolClassMain(),
-                new EqVolClassMain(),
-                new EqVolClassMain(),
-                new EqVolClassMain(),
-                new EqVolClassMain(),
-                new EqVolClassMain(),
-                new EqVolClassMain(),
-                new EqVolClassMain(),
-                new EqVolClassMain(),
-                new EqVolClassMain(),
-                new EqVolClassMain(),
+                URL = "temp"//null防止(念のため)
             };
+            List<EqVolClassMain> EqVolMain_forViewer = new List<EqVolClassMain>();//電文ビューワー用
             for (int i = 0; i < EqVol_Main.Feed.Entry[i].Title.Count(); i++)
             {
-                EqVolMain_forViewer[i].Title = EqVol_Main.Feed.Entry[i].Title;
-                EqVolMain_forViewer[i].URL = EqVol_Main.Feed.Entry[i].Id;
-                EqVolMain_forViewer[i].UpdateTime = EqVol_Main.Feed.Entry[i].Updated + TimeSpan.FromHours(9);
-                EqVolMain_forViewer[i].Source = EqVol_Main.Feed.Entry[i].Author.Name;
-                EqVolMain_forViewer[i].Content = EqVol_Main.Feed.Entry[i].Content.Text.Replace("\n", "　").Replace("　　", "");
-                if (Convert.ToString(EqVol_Main.Feed.Entry[i].Title).Contains("火") || Convert.ToString(EqVol_Main.Feed.Entry[i].Title).Contains("ああああ速報"))
+                EqVolClassMain EqVolMain_forViewerTemp = new EqVolClassMain
+                {
+                    Title = EqVol_Main.Feed.Entry[i].Title,
+                    URL = EqVol_Main.Feed.Entry[i].Id,
+                    UpdateTime = EqVol_Main.Feed.Entry[i].Updated + TimeSpan.FromHours(9),
+                    Source = EqVol_Main.Feed.Entry[i].Author.Name,
+                    Content = EqVol_Main.Feed.Entry[i].Content.Text.Replace("\n", "　").Replace("　　", "")
+                };
+                EqVolMain_forViewer.Add(EqVolMain_forViewerTemp);
+                if (Convert.ToString(EqVol_Main.Feed.Entry[i].Title).Contains("火"))
                 {
                     if (EqVolMain.Title == null)
                     {
@@ -138,115 +92,178 @@ namespace Telop
                     }
                 }
             }
-            if (AccessedURLs.Contains(EqVolMain.URL))
+            if (AccessedURLs.Contains(EqVolMain.URL))//重複防止
             {
-                if (TelopHide.Location.X == 1280)
-                    await ViewClose();
+
             }
-            else
+            else if (EqVolMain.Title != null)//対象あり
             {
-                //噴火警報
+                //噴火警報用
                 //EqVolMain.URL = "https://www.data.jma.go.jp/developer/xml/data/20220724112234_0_VFVO56_400000.xml";
+                //火山の状況用
+                //EqVolMain.URL = "https://www.data.jma.go.jp/developer/xml/data/20220726070012_0_VFVO51_400000.xml";
                 AccessedURLs.Add(EqVolMain.URL);
                 string TelopText = EqVolMain.Content;
-                if (EqVolMain.Title == "火山の状況に関する解説情報")
+                XmlDocument XmlDocument_Detail = new XmlDocument();
+                XmlDocument_Detail.Load(EqVolMain.URL);
+                string JsonText_Detail = JsonConvert.SerializeXmlNode(XmlDocument_Detail);
+                if (EqVolMain.Title == "噴火に関する火山観測報")
                 {
-
+                    JMAxml_EqVol_Detail_Observation.JMAXML EqVol_Detail = JsonConvert.DeserializeObject<JMAxml_EqVol_Detail_Observation.JMAXML>(JsonText_Detail);
+                    string Time = $"日時:{EqVol_Detail.JmxReport.Body.VolcanoInfo.Item.EventTime.EventDateTime.Text}";
+                    string Point = $"{EqVol_Detail.JmxReport.Body.VolcanoInfo.Item.Areas.CodeType}:{EqVol_Detail.JmxReport.Body.VolcanoInfo.Item.Areas.Area.Name}";
+                    string Kind = $"現象:{EqVol_Detail.JmxReport.Body.VolcanoInfo.Item.Kind.Name}";
+                    string PlumeHeight = $"{EqVol_Detail.JmxReport.Body.VolcanoObservation.ColorPlume.JmxEbPlumeHeightAboveCrater.Type}:{EqVol_Detail.JmxReport.Body.VolcanoObservation.ColorPlume.JmxEbPlumeHeightAboveCrater.Description}";
+                    string PlumeDirection = $"{EqVol_Detail.JmxReport.Body.VolcanoObservation.ColorPlume.JmxEbPlumeDirection.Type}:{EqVol_Detail.JmxReport.Body.VolcanoObservation.ColorPlume.JmxEbPlumeDirection.Description}";
+                    string Other = $"{EqVol_Detail.JmxReport.Body.VolcanoObservation.OtherObservation}";
+                    TelopText = $"{Time}  {Point}  {Kind}  {PlumeHeight}  {PlumeDirection}  {Other}";
+                }
+                else if (EqVolMain.Title == "火山の状況に関する解説情報")
+                {
+                    JMAxml_EqVol_Detail_Commentary.JMAXML EqVol_Detail = JsonConvert.DeserializeObject<JMAxml_EqVol_Detail_Commentary.JMAXML>(JsonText_Detail);
+                    string Info1 = EqVol_Detail.JmxReport.Body.VolcanoInfoContent.VolcanoHeadline.Replace("\n", "").Replace("　", "");
+                    string Info2 = EqVol_Detail.JmxReport.Body.VolcanoInfoContent.VolcanoActivity.Replace("\n", "").Replace("　", "");
+                    string Info3 = EqVol_Detail.JmxReport.Body.VolcanoInfoContent.VolcanoPrevention.Replace("\n", "").Replace("　", "");
+                    string Info4 = EqVol_Detail.JmxReport.Body.VolcanoInfoContent.NextAdvisory.Replace("\n", "").Replace("　", "");
+                    TelopText = Info1 + Info2 + Info3 + Info4;
+                }
+                else if (EqVolMain.Title == "噴火警報")//未実装(.JmxReport.Body.VolcanoInfo[]で.Item.Areas.Areaに、[0]では"{}"、[1]では"[]"が含まれるため処理不可)
+                {//VolcanoInfo type="噴火速報"とVolcanoInfo type="噴火速報（対象市町村等）"　　//classを削除すれば処理可能(削除するなら取得する意味ほぼないためパス)
+                    /*   
+                    JMAxml_EqVol_Detail_EruptionBulletin.JMAXML EqVol_Detail = JsonConvert.DeserializeObject<JMAxml_EqVol_Detail_EruptionBulletin.JMAXML>(JsonText_Detail);
+                    string Main = $"{EqVol_Detail.JmxReport.Body.VolcanoInfoContent.VolcanoActivity}";
+                    string Areas = "";
+                    for (int i = 0; i < EqVol_Detail.JmxReport.Body.VolcanoInfo[1].Item.Areas.Area.Count(); i++)
+                    {
+                        Areas += "・" + EqVol_Detail.JmxReport.Body.VolcanoInfo[1].Item.Areas.Area[i].Name;
+                    }
+                    Areas = Areas.Remove(0, 1);
+                    TelopText = $"{Main}  対象市区町村等:{Areas}";
+                    EqVolMain.Title += EqVol_Detail.JmxReport.Body.VolcanoInfoContent.VolcanoHeadline;
+                    */
                 }
                 else
                 {
-                    XmlDocument XmlDocument_Detail = new XmlDocument();
-                    XmlDocument_Detail.Load(EqVolMain.URL);
-                    string JsonText_Detail = JsonConvert.SerializeXmlNode(XmlDocument_Detail);
-                    if (EqVolMain.Title == "噴火に関する火山観測報")
-                    {
-                        JMAxml_EqVol_Detail_Observation.JMAXML EqVol_Detail = JsonConvert.DeserializeObject<JMAxml_EqVol_Detail_Observation.JMAXML>(JsonText_Detail);
-
-                        string Time = $"日時:{EqVol_Detail.JmxReport.Body.VolcanoInfo.Item.EventTime.EventDateTime.Text}";
-                        string Point = $"{EqVol_Detail.JmxReport.Body.VolcanoInfo.Item.Areas.CodeType}:{EqVol_Detail.JmxReport.Body.VolcanoInfo.Item.Areas.Area.Name}";
-                        string Kind = $"現象:{EqVol_Detail.JmxReport.Body.VolcanoInfo.Item.Kind.Name}";
-                        string PlumeHeight = $"{EqVol_Detail.JmxReport.Body.VolcanoObservation.ColorPlume.JmxEbPlumeHeightAboveCrater.Type}:{EqVol_Detail.JmxReport.Body.VolcanoObservation.ColorPlume.JmxEbPlumeHeightAboveCrater.Description}";
-                        string PlumeDirection = $"{EqVol_Detail.JmxReport.Body.VolcanoObservation.ColorPlume.JmxEbPlumeDirection.Type}:{EqVol_Detail.JmxReport.Body.VolcanoObservation.ColorPlume.JmxEbPlumeDirection.Description}";
-                        string Other = $"{EqVol_Detail.JmxReport.Body.VolcanoObservation.OtherObservation}";
-                        TelopText = $"{Time}  {Point}  {Kind}  {PlumeHeight}  {PlumeDirection}  {Other}";
-                    }
-                    /*else if (EqVolMain.Title == "噴火に関する火山観測報")//噴火警報時
-                    {
-                        JMAxml_EqVol_Detail_EruptionBulletin.JMAXML EqVol_Detail = JsonConvert.DeserializeObject<JMAxml_EqVol_Detail_EruptionBulletin.JMAXML>(JsonText_Detail);
-                        string Main = $"{EqVol_Detail.JmxReport.Body.VolcanoInfoContent.VolcanoActivity}";
-                        string Areas = "";
-                        for (int i = 0; i < EqVol_Detail.JmxReport.Body.VolcanoInfo[1].Item.Areas.Area.Count(); i++)
-                        {
-                            Areas += "・" + EqVol_Detail.JmxReport.Body.VolcanoInfo[1].Item.Areas.Area[i].Name;
-                        }
-                        Areas = Areas.Remove(0, 1);
-                        TelopText = $"{Main}  対象市区町村等:{Areas}";
-                        EqVolMain.Title += EqVol_Detail.JmxReport.Body.VolcanoInfoContent.VolcanoHeadline;
-                    }*/
-                    else
-                    {
-                        File.WriteAllText($"Log\\UnknownInfo\\{DateTime.Now:yyyyMMddHHmm}.txt", $"{EqVolMain.URL}\n\n{JsonText_Main}\n\n{JsonText_Detail}");
-
-                    }
+                    File.WriteAllText($"Log\\UnknownInfo\\{DateTime.Now:yyyyMMddHHmm}.txt", $"{EqVolMain.URL}\n\n{JsonText_Main}\n\n{JsonText_Detail}");
                 }
-                await ViewOpen();
-                Title.Text = $"{EqVolMain.Title}　　　{EqVolMain.UpdateTime}発表";
-                MainText.Text = TelopText;
+                if (Title.Text == "")//初回
+                {
+                    await ViewOpen(true);
+                    Title.Text = $"{EqVolMain.Title}　　　{EqVolMain.UpdateTime}発表";
+                    MainText.Text = TelopText;
+                }
+                else if (Title.Text != $"{EqVolMain.Title}　　　{EqVolMain.UpdateTime}発表")//更新
+                {
+                    await ViewClose(false);
+                    await ViewOpen(false);
+                    Title.Text = $"{EqVolMain.Title}　　　{EqVolMain.UpdateTime}発表";
+                    MainText.Text = TelopText;
+                }
+            }
+            else//対象なし
+            {
+
             }
         }
-        private void Move_Tick(object sender, EventArgs e)
+        private async void Move_Tick(object sender, EventArgs e)
         {
-            if (MainText.Location.X > MainText.Width * -1 && MainText.Width > 1280)
+            if (MainText.Location.X > MainText.Width * -1)//流し中
             {
                 MainText.Location = new Point(MainText.Location.X - 10, MainText.Location.Y);
             }
-            else if (1280 > MainText.Width)
+            if (MainText.Location.X <= MainText.Width * -1)//流し終了
             {
-                MainText.Location = new Point(0, MainText.Location.Y);
-            }
-            else if (MainText.Location.X < MainText.Width * -1)
-            {
-                MainText.Location = new Point(1280, MainText.Location.Y);
+                if (RemainingDisplayNum > 0)//もう一度
+                {
+                    RemainingDisplayNum--;
+                    MainText.Location = new Point(1280, MainText.Location.Y);
+                }
+                if (RemainingDisplayNumberDefalt == -1)//無限
+                {
+                    MainText.Location = new Point(1280, MainText.Location.Y);
+                }
+                else//流し終了
+                {
+                    if (UserText == "null" && TelopHide.Location.X != 1280)//終了
+                    {
+                        await ViewClose(true);
+                    }
+                    else//ユーザーテキスト表示
+                    {
+                        Title.Text = UserTitle;
+                        MainText.Text = UserText;
+                        RemainingDisplayNum = 2;
+                        MainText.Location = new Point(1280, MainText.Location.Y);
+                    }
+                }
             }
         }
         public List<string> AccessedURLs = new List<string>();
-        public string NowTime_ = "";
+        public string NowTimeTemp = "";
+        public string UserTitle = "えええ";
+        public string UserText = "ああああああ";
+        public int RemainingDisplayNumberDefalt = -1;
+        public int RemainingDisplayNum = 3;
         private void Time_Tick(object sender, EventArgs e)
         {
             NowTime.Text = DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss");
         }
         private void TimeCheck_Tick(object sender, EventArgs e)
         {
-            if (NowTime_ == "")
+            if (NowTimeTemp == "")
             {
-                NowTime_ = DateTime.Now.ToString("ss");
+                NowTimeTemp = DateTime.Now.ToString("ss");
             }
-            if (NowTime_ != DateTime.Now.ToString("ss"))
+            if (NowTimeTemp != DateTime.Now.ToString("ss"))
             {
                 Time.Enabled = true;
                 TimeCheck.Enabled = false;
             }
         }
-        public async Task ViewOpen()
+        public async Task ViewOpen(bool First)//初期はゆっくり
         {
-            for (int i = 40; i <= 1280; i += 40)
+            if (First)
             {
-                TelopHide.Location = new Point(i, 0);
-                await Task.Delay(10);
+                for (int i = TelopHide.Location.X; i <= 1280; i += 40)
+                {
+                    TelopHide.Location = new Point(i, 0);
+                    await Task.Delay(10);
+                }
+                Title.Text = "";
+                MainText.Text = "";
+            }
+            else
+            {
+                for (int i = TelopHide.Location.X; i <= 1280; i += 40)
+                {
+                    TelopHide.Location = new Point(i, 0);
+                    await Task.Delay(5);
+                }
             }
             MainText.Location = new Point(1280, MainText.Location.Y);
             return;
         }
-        public async Task ViewClose()
+        public async Task ViewClose(bool Clear)//最後はゆっくり
         {
-            for (int i = 1240; i >= 0; i -= 40)
+            if (Clear)
             {
-                TelopHide.Location = new Point(i, 0);
-                await Task.Delay(10);
+                for (int i = TelopHide.Location.X; i >= 0; i -= 40)
+                {
+                    TelopHide.Location = new Point(i, 0);
+                    await Task.Delay(10);
+                }
+                Title.Text = "";
+                MainText.Text = "";
+            }
+            else
+            {
+                for (int i = TelopHide.Location.X; i >= 0; i -= 40)
+                {
+                    TelopHide.Location = new Point(i, 0);
+                    await Task.Delay(5);
+                }
             }
             MainText.Location = new Point(1280, MainText.Location.Y);
-            Title.Text = "";
-            MainText.Text = "";
             return;
         }
     }
