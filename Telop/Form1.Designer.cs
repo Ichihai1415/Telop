@@ -37,6 +37,7 @@
             this.TelopHide = new System.Windows.Forms.Label();
             this.NowTime = new System.Windows.Forms.Label();
             this.TimeCheck = new System.Windows.Forms.Timer(this.components);
+            this.UserTextForced = new System.Windows.Forms.Timer(this.components);
             this.SuspendLayout();
             // 
             // Title
@@ -57,7 +58,7 @@
             this.MainText.Location = new System.Drawing.Point(0, 32);
             this.MainText.Margin = new System.Windows.Forms.Padding(0);
             this.MainText.Name = "MainText";
-            this.MainText.Size = new System.Drawing.Size(0, 38);
+            this.MainText.Size = new System.Drawing.Size(0, 48);
             this.MainText.TabIndex = 1;
             // 
             // Xml
@@ -101,12 +102,18 @@
             this.TimeCheck.Interval = 1;
             this.TimeCheck.Tick += new System.EventHandler(this.TimeCheck_Tick);
             // 
+            // UserTextForced
+            // 
+            this.UserTextForced.Enabled = true;
+            this.UserTextForced.Interval = 333;
+            this.UserTextForced.Tick += new System.EventHandler(this.UserTextForced_Tick);
+            // 
             // Form1
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(23F, 56F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(29F, 70F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.Blue;
-            this.ClientSize = new System.Drawing.Size(1280, 72);
+            this.ClientSize = new System.Drawing.Size(1278, 64);
             this.Controls.Add(this.TelopHide);
             this.Controls.Add(this.NowTime);
             this.Controls.Add(this.Title);
@@ -133,6 +140,7 @@
         private System.Windows.Forms.Label TelopHide;
         private System.Windows.Forms.Label NowTime;
         private System.Windows.Forms.Timer TimeCheck;
+        private System.Windows.Forms.Timer UserTextForced;
     }
 }
 

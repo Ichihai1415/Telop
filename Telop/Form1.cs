@@ -159,10 +159,13 @@ namespace Telop
                     Title.Text = $"{EqVolMain.Title}　　　{EqVolMain.UpdateTime}発表";
                     MainText.Text = TelopText;
                 }
+                SaveTitle = Title.Text;
+                SaveText = MainText.Text;
             }
             else//対象なし
             {
-
+                SaveTitle = "";
+                SaveText = "";
             }
         }
         private async void Move_Tick(object sender, EventArgs e)
@@ -204,6 +207,8 @@ namespace Telop
         public string UserText = "ああああああ";
         public int RemainingDisplayNumberDefalt = -1;
         public int RemainingDisplayNum = 3;
+        public string SaveTitle = " ";
+        public string SaveText = " ";
         private void Time_Tick(object sender, EventArgs e)
         {
             NowTime.Text = DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss");
@@ -265,6 +270,49 @@ namespace Telop
             }
             MainText.Location = new Point(1280, MainText.Location.Y);
             return;
+        }
+
+        private async void UserTextForced_Tick(object sender, EventArgs e)
+        {
+            try
+            {
+                if (File.Exists("UserForcedText.txt"))
+                {
+                    string[] UserForcedText = File.ReadAllText("UserForcedText.txt").Split(',');
+                    if (UserForcedText.Length == 2)
+                    {
+                        if (Title.Text != UserForcedText[0])
+                        {
+                            Title.Text = "";
+                            MainText.Text = "";
+                            await ViewClose(false);
+                            await ViewOpen(false);
+                        }
+                        Title.Text = UserForcedText[0];
+                        MainText.Text = UserForcedText[1];
+                    }
+                    else
+                    {
+                        if (Title.Text != UserForcedText[0] && SaveTitle != "" && Title.Text != SaveTitle)
+                        {
+                            Title.Text = "";
+                            MainText.Text = "";
+                            await ViewClose(false);
+                            await ViewOpen(false);
+                        }
+                        Title.Text = SaveTitle;
+                        MainText.Text = SaveText;
+                        if (SaveTitle == "")
+                        {
+                            await ViewClose(true);
+                        }
+                    }
+                }
+            }
+            catch
+            {
+
+            }
         }
     }
 }
