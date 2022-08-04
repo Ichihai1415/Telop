@@ -16,20 +16,20 @@ namespace Telop
         {
             InitializeComponent();
         }
-        private async void Xml_Tick(object sender, EventArgs e)
+        private void Xml_Tick(object sender, EventArgs e)
         {
             Xml.Interval = 60000;
             XmlDocument XmlDocument_Main = new XmlDocument();
             XmlDocument_Main.Load("https://www.data.jma.go.jp/developer/xml/feed/eqvol.xml");
             string JsonText_Main = JsonConvert.SerializeXmlNode(XmlDocument_Main);
             JMAxml_EqVol_Main.JMAXML EqVol_Main = JsonConvert.DeserializeObject<JMAxml_EqVol_Main.JMAXML>(JsonText_Main);
-            if (AccessedURLs.Count == 0)//初回動作　通常!=
+            if (AccessedURLs.Count != 0)//初回以外動作　通常!=
             {
                 for (int i = 15; i > 0; i--)
                 {
                     if (AccessedURLs.Contains(EqVol_Main.Feed.Entry[i].Id) == false)
                     {
-                        if (EqVol_Main.Feed.Entry[i].Title.Contains("火") && EqVol_Main.Feed.Entry[i].Title.Contains("灰"))
+                        if (EqVol_Main.Feed.Entry[i].Title.Contains("火") || EqVol_Main.Feed.Entry[i].Title.Contains("灰"))
                         {
 
                             string Title = EqVol_Main.Feed.Entry[i].Title;
@@ -93,7 +93,7 @@ namespace Telop
                     }
                 }
             }
-            else
+            else//初回動作
             {
                 for (int i = 0; i < EqVol_Main.Feed.Entry.Count(); i++)
                     AccessedURLs.Add(EqVol_Main.Feed.Entry[i].Id);
@@ -118,7 +118,6 @@ namespace Telop
                 Title.Text = UserTitle;
                 MainText.Text = UserText;
             }
-
         }
         private async void LabelMove_Tick(object sender, EventArgs e)
         {
