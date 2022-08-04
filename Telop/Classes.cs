@@ -7,15 +7,6 @@ using System.Threading.Tasks;
 using System.Xml.Serialization;
 namespace Telop
 {
-
-    public class EqVolClassMain
-    {
-        public string Title { get; set; }
-        public string URL { get; set; }
-        public DateTime UpdateTime { get; set; }
-        public string Source { get; set; }
-        public string Content { get; set; }
-    }
     public class JMAxml_EqVol_Main
     {
 		public class Author
