@@ -19,7 +19,7 @@ namespace Telop
         }
         private void Xml_Tick(object sender, EventArgs e)
         {
-            Xml.Interval = 60000;/*
+            Xml.Interval = 60000;
             //地震火山
             XmlDocument XmlDocument_EqVolMain = new XmlDocument();
             XmlDocument_EqVolMain.Load("https://www.data.jma.go.jp/developer/xml/feed/eqvol.xml");
@@ -80,7 +80,7 @@ namespace Telop
                                 Areas = Areas.Remove(0, 1);
                                 TelopText = $"{Main}  対象市区町村等:{Areas}";
                                 EqVolMain.Title += EqVol_Detail.JmxReport.Body.VolcanoInfoContent.VolcanoHeadline;
-                                *//*
+                                */
                             }
                             else if (Title.Contains("降灰予報"))
                             {
@@ -100,7 +100,7 @@ namespace Telop
                 for (int i = 10; i > 0; i--)
                     AccessedURLs.Add(EqVol_Main.Feed.Entry[i].Id);
             }
-            */
+            
             //随時
             XmlDocument XmlDocument_ExtraMain = new XmlDocument();
             XmlDocument_ExtraMain.Load("https://www.data.jma.go.jp/developer/xml/feed/extra.xml");
@@ -214,6 +214,10 @@ namespace Telop
                 Title.Text = UserTitle;
                 MainText.Text = UserText;
             }
+            BackColor = Color.FromArgb(0, 0, 255);
+            MainText.BackColor = BackColor;
+            Title.BackColor = Color.FromArgb(0, 0, 200);
+            NowTime.BackColor = Color.FromArgb(0, 0, 150);
         }
         private async void LabelMove_Tick(object sender, EventArgs e)
         {
