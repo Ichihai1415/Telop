@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -18,14 +19,15 @@ namespace Telop
         }
         private void Xml_Tick(object sender, EventArgs e)
         {
-            Xml.Interval = 60000;
-            XmlDocument XmlDocument_Main = new XmlDocument();
-            XmlDocument_Main.Load("https://www.data.jma.go.jp/developer/xml/feed/eqvol.xml");
-            string JsonText_Main = JsonConvert.SerializeXmlNode(XmlDocument_Main);
-            JMAxml_EqVol_Main.JMAXML EqVol_Main = JsonConvert.DeserializeObject<JMAxml_EqVol_Main.JMAXML>(JsonText_Main);
+            Xml.Interval = 60000;/*
+            //地震火山
+            XmlDocument XmlDocument_EqVolMain = new XmlDocument();
+            XmlDocument_EqVolMain.Load("https://www.data.jma.go.jp/developer/xml/feed/eqvol.xml");
+            string JsonText_EqVolMain = JsonConvert.SerializeXmlNode(XmlDocument_EqVolMain);
+            JMAxml_EqVol_Main.JMAXML EqVol_Main = JsonConvert.DeserializeObject<JMAxml_EqVol_Main.JMAXML>(JsonText_EqVolMain);
             if (AccessedURLs.Count != 0)//初回以外動作　通常!=
             {
-                for (int i = 15; i > 0; i--)
+                for (int i = 10; i > 0; i--)
                 {
                     if (AccessedURLs.Contains(EqVol_Main.Feed.Entry[i].Id) == false)
                     {
@@ -44,10 +46,10 @@ namespace Telop
                             XmlDocument XmlDocument_Detail = new XmlDocument();
                             XmlDocument_Detail.Load(URL);
                             AccessedURLs.Add(URL);
-                            string JsonText_Detail = JsonConvert.SerializeXmlNode(XmlDocument_Detail);
+                            string JsonText_EqVolDetail = JsonConvert.SerializeXmlNode(XmlDocument_Detail);
                             if (Title == "噴火に関する火山観測報")
                             {
-                                JMAxml_EqVol_Detail_Observation.JMAXML EqVol_Detail = JsonConvert.DeserializeObject<JMAxml_EqVol_Detail_Observation.JMAXML>(JsonText_Detail);
+                                JMAxml_EqVol_Detail_Observation.JMAXML EqVol_Detail = JsonConvert.DeserializeObject<JMAxml_EqVol_Detail_Observation.JMAXML>(JsonText_EqVolDetail);
                                 string Time = $"日時:{EqVol_Detail.JmxReport.Body.VolcanoInfo.Item.EventTime.EventDateTime.Text}";
                                 string Point = $"{EqVol_Detail.JmxReport.Body.VolcanoInfo.Item.Areas.CodeType}:{EqVol_Detail.JmxReport.Body.VolcanoInfo.Item.Areas.Area.Name}";
                                 string Kind = $"現象:{EqVol_Detail.JmxReport.Body.VolcanoInfo.Item.Kind.Name}";
@@ -58,7 +60,7 @@ namespace Telop
                             }
                             else if (Title == "火山の状況に関する解説情報")
                             {
-                                JMAxml_EqVol_Detail_Commentary.JMAXML EqVol_Detail = JsonConvert.DeserializeObject<JMAxml_EqVol_Detail_Commentary.JMAXML>(JsonText_Detail);
+                                JMAxml_EqVol_Detail_Commentary.JMAXML EqVol_Detail = JsonConvert.DeserializeObject<JMAxml_EqVol_Detail_Commentary.JMAXML>(JsonText_EqVolDetail);
                                 string Info1 = EqVol_Detail.JmxReport.Body.VolcanoInfoContent.VolcanoHeadline.Replace("\n", "").Replace("　", "");
                                 string Info2 = EqVol_Detail.JmxReport.Body.VolcanoInfoContent.VolcanoActivity.Replace("\n", "").Replace("　", "");
                                 string Info3 = EqVol_Detail.JmxReport.Body.VolcanoInfoContent.VolcanoPrevention.Replace("\n", "").Replace("　", "");
@@ -68,7 +70,7 @@ namespace Telop
                             else if (Title == "噴火警報")//未実装(.JmxReport.Body.VolcanoInfo[]で.Item.Areas.Areaに、[0]では"{}"、[1]では"[]"が含まれるため処理不可)
                             {//VolcanoInfo type="噴火速報"とVolcanoInfo type="噴火速報（対象市町村等）"　　//classを削除すれば処理可能(削除するなら取得する意味ほぼないためパス)
                                 /*   
-                                JMAxml_EqVol_Detail_EruptionBulletin.JMAXML EqVol_Detail = JsonConvert.DeserializeObject<JMAxml_EqVol_Detail_EruptionBulletin.JMAXML>(JsonText_Detail);
+                                JMAxml_EqVol_Detail_EruptionBulletin.JMAXML EqVol_Detail = JsonConvert.DeserializeObject<JMAxml_EqVol_Detail_EruptionBulletin.JMAXML>(JsonText_EqVolDetail);
                                 string Main = $"{EqVol_Detail.JmxReport.Body.VolcanoInfoContent.VolcanoActivity}";
                                 string Areas = "";
                                 for (int i = 0; i < EqVol_Detail.JmxReport.Body.VolcanoInfo[1].Item.Areas.Area.Count(); i++)
@@ -78,14 +80,14 @@ namespace Telop
                                 Areas = Areas.Remove(0, 1);
                                 TelopText = $"{Main}  対象市区町村等:{Areas}";
                                 EqVolMain.Title += EqVol_Detail.JmxReport.Body.VolcanoInfoContent.VolcanoHeadline;
-                                */
+                                *//*
                             }
                             else if (Title.Contains("降灰予報"))
                             {
-
+                                //そのまま
                             }
                             else
-                                File.WriteAllText($"Log\\UnknownInfo\\{DateTime.Now:yyyyMMddHHmm}.txt", $"{URL}\n\n{JsonText_Main}\n\n{JsonText_Detail}");
+                                File.WriteAllText($"Log\\UnknownInfo\\{DateTime.Now:yyyyMMddHHmmss}.txt", $"{URL}\n\n{JsonText_EqVolMain}\n\n{JsonText_EqVolDetail}");
                             DisplayTitles.Add($"{Title}  {UpdateTime}");
                             DisplayTexts.Add(TelopText);
                         }
@@ -95,15 +97,109 @@ namespace Telop
             }
             else//初回動作
             {
-                for (int i = 0; i < EqVol_Main.Feed.Entry.Count(); i++)
+                for (int i = 10; i > 0; i--)
                     AccessedURLs.Add(EqVol_Main.Feed.Entry[i].Id);
             }
-
+            */
             //随時
-
-
-
-
+            XmlDocument XmlDocument_ExtraMain = new XmlDocument();
+            XmlDocument_ExtraMain.Load("https://www.data.jma.go.jp/developer/xml/feed/extra.xml");
+            string JsonText_ExtraMain = JsonConvert.SerializeXmlNode(XmlDocument_ExtraMain);
+            JMAxml_Extra_Main.JMAXML Extra_Main = JsonConvert.DeserializeObject<JMAxml_Extra_Main.JMAXML>(JsonText_ExtraMain);
+            if (AccessedURLs.Count != 0)//初回以外動作　通常!=
+            {
+                for (int i = 20; i >= 0; i--)
+                {
+                    if (AccessedURLs.Contains(Extra_Main.Feed.Entry[i].Id) == false)
+                    {
+                        if (!Extra_Main.Feed.Entry[i].Title.Contains("警報・注意報") && Extra_Main.Feed.Entry[i].Title != "熱中症警戒アラート" && Extra_Main.Feed.Entry[i].Title != "早期天候情報" && !Extra_Main.Feed.Entry[i].Title.Contains("台風解析・予報情報") && Extra_Main.Feed.Entry[i].Title != "竜巻注意情報（目撃情報付き）")
+                        {
+                            string Title = Extra_Main.Feed.Entry[i].Title;
+                            string URL = Extra_Main.Feed.Entry[i].Id;
+                            DateTime UpdateTime = Extra_Main.Feed.Entry[i].Updated + TimeSpan.FromHours(9);
+                            string Content = Extra_Main.Feed.Entry[i].Content.Text.Replace("回", "回　").Replace("\n", "　").Replace("　　", "");
+                            string TelopText = Content;
+                            XmlDocument XmlDocument_ExtraDetail = new XmlDocument();
+                            XmlDocument_ExtraDetail.Load(URL);
+                            AccessedURLs.Add(URL);
+                            string JsonText_ExtraDetail = JsonConvert.SerializeXmlNode(XmlDocument_ExtraDetail);
+                            JObject Extra_Detail = JObject.Parse(JsonText_ExtraDetail);
+                            if (Title.Contains("気象情報") || Title == "竜巻注意情報" || Title == "全般台風情報（定型）)" || Title == "スモッグ気象情報" || Title == "記録的短時間大雨情報")
+                                Console.Write("そのまま");
+                            else if (Title != "指定河川洪水予報")
+                            {
+                                string AddText = (string)Extra_Detail.SelectToken("jmx:Report.Body.Warning.Item[0].Kind.Property.Text");
+                                TelopText += AddText;
+                            }
+                            else if (Title == "土砂災害警戒情報")
+                            {
+                                string Text = "";
+                                string Kind1 = "";
+                                string Area1 = "";
+                                string Kind2 = "";
+                                string Area2 = "";
+                                string Kind3 = "";
+                                string Area3 = "";
+                                if (Extra_Detail.SelectToken("jmx:Report.Head.Headline.Information.Item[1].Kind.Condition") != null)
+                                {//追加/一部解除
+                                    Kind1 = (string)Extra_Detail.SelectToken("jmx:Report.Head.Headline.Information.Item[0].Kind.Condition");
+                                    if (Extra_Detail.SelectToken("jmx:Report.Head.Headline.Information.Item[0].Areas.Area.Name") == null)//地域が複数の場合
+                                        for (int j = 0; j < Extra_Detail.SelectToken("jmx:Report.Head.Headline.Information.Item[0].Areas.Area").Count(); j++)
+                                            Area1 += " " + Extra_Detail.SelectToken($"jmx:Report.Head.Headline.Information.Item[0].Areas.Area[{j}].Name");
+                                    else
+                                        Area1 = (string)Extra_Detail.SelectToken("jmx:Report.Head.Headline.Information.Item[0].Areas.Area.Name");
+                                    Kind2 = (string)Extra_Detail.SelectToken("jmx:Report.Head.Headline.Information.Item[1].Kind.Condition");
+                                    if (Extra_Detail.SelectToken("jmx:Report.Head.Headline.Information.Item[1].Areas.Area.Name") == null)//地域が複数の場合
+                                        for (int j = 0; j < Extra_Detail.SelectToken("jmx:Report.Head.Headline.Information.Item[1].Areas.Area").Count(); j++)
+                                            Area2 += " " + Extra_Detail.SelectToken($"jmx:Report.Head.Headline.Information.Item[1].Areas.Area[{j}].Name");
+                                    else
+                                        Area2 = (string)Extra_Detail.SelectToken("jmx:Report.Head.Headline.Information.Item[1].Areas.Area.Name");
+                                    if (Extra_Detail.SelectToken("jmx:Report.Head.Headline.Information.Item[1].Kind.Condition") == null)
+                                    {//発表,継続,解除があるとき
+                                        Kind3 = (string)Extra_Detail.SelectToken("jmx:Report.Head.Headline.Information.Item[2].Kind.Condition");
+                                        if (Extra_Detail.SelectToken("jmx:Report.Head.Headline.Information.Item[2].Areas.Area.Name") == null)//地域が複数の場合
+                                            for (int j = 0; j < Extra_Detail.SelectToken("jmx:Report.Head.Headline.Information.Item[2].Areas.Area").Count(); j++)
+                                                Area3 += " " + Extra_Detail.SelectToken($"jmx:Report.Head.Headline.Information.Item[2].Areas.Area[{j}].Name");
+                                        else
+                                            Area3 = (string)Extra_Detail.SelectToken("jmx:Report.Head.Headline.Information.Item[2].Areas.Area.Name");
+                                    }
+                                }
+                                else
+                                {//発表/全解除
+                                    Kind1 = (string)Extra_Detail.SelectToken("jmx:Report.Head.Headline.Information.Item.Kind.Condition");
+                                    if (Extra_Detail.SelectToken("jmx:Report.Head.Headline.Information.Item.Areas.Area.Name") == null)//地域が複数の場合
+                                        for (int j = 0; j < Extra_Detail.SelectToken("jmx:Report.Head.Headline.Information.Item.Areas.Area").Count(); j++)
+                                            Area1 += " " + Extra_Detail.SelectToken($"jmx:Report.Head.Headline.Information.Item.Areas.Area[{j}].Name");
+                                    else
+                                        Area1 = (string)Extra_Detail.SelectToken("jmx:Report.Head.Headline.Information.Item.Areas.Area.Name");
+                                }
+                                if (Kind1 == "発表")
+                                    Text += " <発表>" + Area1;
+                                if (Kind1 == "解除")
+                                    Text += " <解除>" + Area1;
+                                if (Kind2 == "解除")
+                                    Text += " <解除>" + Area2;
+                                if (Kind3 == "解除")
+                                    Text += " <解除>" + Area3;
+                                if (Kind2 == "継続")
+                                    Text += " <継続>" + Area2;
+                                if (Kind3 == "継続")
+                                    Text += " <継続>" + Area3;
+                                TelopText = Text + TelopText;
+                            }
+                            else
+                                File.WriteAllText($"Log\\UnknownInfo\\{DateTime.Now:yyyyMMddHHmmss}.txt", $"{URL}\n\n{JsonText_ExtraMain}\n\n{JsonText_ExtraDetail}");
+                            DisplayTitles.Add($"{Title}  {UpdateTime}");
+                            DisplayTexts.Add(TelopText);
+                        }
+                    }
+                }
+            }
+            else//初回動作
+            {
+                for (int i = 20; i > 0; i--)
+                    AccessedURLs.Add(Extra_Main.Feed.Entry[i].Id);
+            }
             if (DisplayTitles.Count > 0)
             {
                 Title.Text = DisplayTitles[0];
@@ -148,7 +244,7 @@ namespace Telop
         private void TextChange_Tick(object sender, EventArgs e)
         {
             TextChange.Interval = 60000;
-           
+
         }
         private void Time_Tick(object sender, EventArgs e)
         {

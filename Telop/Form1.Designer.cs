@@ -128,6 +128,7 @@
             this.Font = new System.Drawing.Font("Koruri Regular", 30F);
             this.ForeColor = System.Drawing.Color.White;
             this.Margin = new System.Windows.Forms.Padding(13);
+            this.MaximizeBox = false;
             this.MaximumSize = new System.Drawing.Size(1296, 111);
             this.MinimumSize = new System.Drawing.Size(1296, 111);
             this.Name = "Form1";
