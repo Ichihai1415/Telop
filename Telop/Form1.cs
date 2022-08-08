@@ -200,7 +200,7 @@ namespace Telop
                 for (int i = 20; i > 0; i--)
                     AccessedURLs.Add(Extra_Main.Feed.Entry[i].Id);
             }
-            if (DisplayTitles.Count > 0)
+            if (DisplayTitles.Count > 0 && Title.Text != DisplayTitles[0])
             {
                 Title.Text = DisplayTitles[0];
                 MainText.Text = DisplayTexts[0];
@@ -211,6 +211,11 @@ namespace Telop
             }
             else
             {
+                if(DisplayTitles.Count > 0)
+                {
+                    DisplayTitles.RemoveRange(0, 1);
+                    DisplayTexts.RemoveRange(0, 1);
+                }
                 Title.Text = UserTitle;
                 MainText.Text = UserText;
             }
