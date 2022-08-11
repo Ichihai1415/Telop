@@ -397,6 +397,8 @@ namespace Telop
                 Title.Text = UserTitles[UserTextInt];//Replace("coron",",")
                 MainText.Text = UserTexts[UserTextInt];
                 UserTextInt++;
+                if(Title.Text == "")
+                    await ViewClose(10);
             }
             catch
             {
@@ -405,6 +407,8 @@ namespace Telop
                     UserTextInt=0;
                     Title.Text = UserTitles[0];
                     MainText.Text = UserTexts[0];
+                    if (Title.Text == "")
+                        await ViewClose(10);
                 }
                 catch
                 {
