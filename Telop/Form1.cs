@@ -361,16 +361,7 @@ namespace Telop
         }
         public async void UserTextChange()
         {
-            List<string> UserTitles = new List<string>();
             List<string> UserTexts = new List<string>();
-            try
-            {
-                UserTitles = File.ReadAllText("UserTitle.txt").Split(',').ToList();
-            }
-            catch
-            {
-                File.WriteAllText("UserTitle.txt", "");
-            }
             try
             {
                 UserTexts = File.ReadAllText("UserText.txt").Split(',').ToList();
@@ -381,8 +372,8 @@ namespace Telop
             }
             try
             {
-                Title.Text = UserTitles[UserTextInt];//Replace("coron",",")
-                MainText.Text = UserTexts[UserTextInt];
+                Title.Text = UserTexts[UserTextInt*2];//Replace("coron",",")
+                MainText.Text = UserTexts[UserTextInt*2+1];
                 UserTextInt++;
                 if (Title.Text == "")
                     await ViewClose(10);
@@ -392,8 +383,8 @@ namespace Telop
                 try
                 {
                     UserTextInt = 0;
-                    Title.Text = UserTitles[0];
-                    MainText.Text = UserTexts[0];
+                    Title.Text = UserTexts[0];
+                    MainText.Text = UserTexts[1];
                     if (Title.Text == "")
                         await ViewClose(10);
                 }
