@@ -216,7 +216,6 @@ namespace Telop
                     {
                         await ViewClose(5);
                         await ViewOpen(5);
-                        MainText.Location = new Point(1280, MainText.Location.Y);
                         Title.Text = DisplayTitles[0];
                         MainText.Text = DisplayTexts[0];
                         SaveTitle = Title.Text;
@@ -254,35 +253,22 @@ namespace Telop
                 }
             }
         }
-        private async void LabelMove_Tick(object sender, EventArgs e)
+        private void LabelMove_Tick(object sender, EventArgs e)
         {
             if (MainText.Location.X > MainText.Width * -1)//流し中
-            {
                 MainText.Location = new Point(MainText.Location.X - 10, MainText.Location.Y);
-                if (TelopHide.Location.X == 0)//流し開始
-                    await ViewOpen(10);
-            }
             else if (MainText.Location.X <= MainText.Width * -1)//流し終了
-            {
                 MainText.Location = new Point(1280, MainText.Location.Y);
-                if (Settings.Default.IsUserText == false && TelopHide.Location.X == 1280)//流し終了
-                    await ViewClose(10);
-            }
         }
         public List<string> AccessedURLs1 = new List<string>();
         public List<string> AccessedURLs2 = new List<string>();
         public string NowTimeTemp = "";
         public int RemainingDisplayNumberDefalt = -1;
-        public string SaveTitle = " ";//ユーザー強制テキスト表示終了後復元用
-        public string SaveText = " ";
+        public string SaveTitle = "";//ユーザー強制テキスト表示終了後復元用
+        public string SaveText = "";
         public int UserTextInt = 0;
         public List<string> DisplayTitles = new List<string>();
         public List<string> DisplayTexts = new List<string>();
-        private void TextChange_Tick(object sender, EventArgs e)
-        {
-            TextChange.Interval = 60000;
-
-        }
         private void Time_Tick(object sender, EventArgs e)
         {
             NowTime.Text = DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss");
@@ -305,6 +291,7 @@ namespace Telop
                 TelopHide.Location = new Point(i, 0);
                 await Task.Delay(Delay);
             }
+            MainText.Location = new Point(1280, MainText.Location.Y);
             return;
         }
         public async Task ViewClose(int Delay)
@@ -349,7 +336,7 @@ namespace Telop
                     {
                         LabelMove.Enabled = true;
                         Xml.Enabled = true;
-                        if (Title.Text != UserForcedText[0] && SaveTitle != " " && Title.Text != SaveTitle)
+                        if (Title.Text != UserForcedText[0] && SaveTitle != "" && Title.Text != SaveTitle)
                         {
                             await ViewClose(5);
                             await ViewOpen(5);
@@ -397,14 +384,14 @@ namespace Telop
                 Title.Text = UserTitles[UserTextInt];//Replace("coron",",")
                 MainText.Text = UserTexts[UserTextInt];
                 UserTextInt++;
-                if(Title.Text == "")
+                if (Title.Text == "")
                     await ViewClose(10);
             }
             catch
             {
                 try
                 {
-                    UserTextInt=0;
+                    UserTextInt = 0;
                     Title.Text = UserTitles[0];
                     MainText.Text = UserTexts[0];
                     if (Title.Text == "")

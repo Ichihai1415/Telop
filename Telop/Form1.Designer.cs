@@ -38,7 +38,6 @@
             this.NowTime = new System.Windows.Forms.Label();
             this.TimeCheck = new System.Windows.Forms.Timer(this.components);
             this.UserTextForced = new System.Windows.Forms.Timer(this.components);
-            this.TextChange = new System.Windows.Forms.Timer(this.components);
             this.SuspendLayout();
             // 
             // Title
@@ -109,12 +108,6 @@
             this.UserTextForced.Interval = 10;
             this.UserTextForced.Tick += new System.EventHandler(this.UserTextForced_Tick);
             // 
-            // TextChange
-            // 
-            this.TextChange.Enabled = true;
-            this.TextChange.Interval = 9999;
-            this.TextChange.Tick += new System.EventHandler(this.TextChange_Tick);
-            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(29F, 70F);
@@ -149,7 +142,6 @@
         private System.Windows.Forms.Label NowTime;
         private System.Windows.Forms.Timer TimeCheck;
         private System.Windows.Forms.Timer UserTextForced;
-        private System.Windows.Forms.Timer TextChange;
     }
 }
 
