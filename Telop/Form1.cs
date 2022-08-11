@@ -336,7 +336,7 @@ namespace Telop
                     {
                         LabelMove.Enabled = true;
                         Xml.Enabled = true;
-                        if (Title.Text != UserForcedText[0] && SaveTitle != "" && Title.Text != SaveTitle)
+                        if (Title.Text != UserForcedText[0] && SaveTitle != "" && Title.Text != SaveTitle && SaveTitle != "UserText")
                         {
                             await ViewClose(5);
                             await ViewOpen(5);
@@ -347,7 +347,9 @@ namespace Telop
                             Title.BackColor = Color.FromArgb(0, 0, 200);
                             NowTime.BackColor = Color.FromArgb(0, 0, 150);
                         }
-                        if (SaveTitle == "")
+                        else if (SaveTitle == "UserText")
+                            UserTextChange();
+                        else if (SaveTitle == "")
                             await ViewClose(10);
                     }
                 }
@@ -361,7 +363,9 @@ namespace Telop
         }
         public async void UserTextChange()
         {
-            List<string> UserTexts = new List<string>();
+                  SaveTitle = "UserText";//ユーザー強制テキスト表示終了後復元用
+
+        List<string> UserTexts = new List<string>();
             try
             {
                 UserTexts = File.ReadAllText("UserText.txt").Split(',').ToList();
