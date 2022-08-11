@@ -9,6 +9,7 @@ using System.Net;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Xml;
+using Telop.Properties;
 
 namespace Telop
 {
@@ -18,12 +19,12 @@ namespace Telop
         {
             InitializeComponent();
         }
-        private void Xml_Tick(object sender, EventArgs e)
+        private async void Xml_Tick(object sender, EventArgs e)
         {
             try
             {
                 Xml.Interval = 60000;
-                
+
                 //地震火山
                 XmlDocument XmlDocument_EqVolMain = new XmlDocument();
                 XmlDocument_EqVolMain.Load("https://www.data.jma.go.jp/developer/xml/feed/eqvol.xml");
@@ -115,9 +116,11 @@ namespace Telop
                         Console.WriteLine(i);
                         if (AccessedURLs2.Contains(Extra_Main.Feed.Entry[i].Id) == false)
                         {
-                            if (!Extra_Main.Feed.Entry[i].Title.Contains("警報・注意報") && Extra_Main.Feed.Entry[i].Title != "熱中症警戒アラート" && Extra_Main.Feed.Entry[i].Title != "早期天候情報" && !Extra_Main.Feed.Entry[i].Title.Contains("台風解析・予報情報") && Extra_Main.Feed.Entry[i].Title != "竜巻注意情報（目撃情報付き）")
+                            string Title = Extra_Main.Feed.Entry[i].Title;
+                            if (!Title.Contains("警報・注意報") && Title != "熱中症警戒アラート" && Title != "早期天候情報" && !Title.Contains("台風解析・予報情報") && Title != "竜巻注意情報（目撃情報付き）")
                             {
-                                string Title = Extra_Main.Feed.Entry[i].Title;
+                                if (Title.Contains("台風") && Title != "全般台風情報（定型）")
+                                    continue;
                                 string URL = Extra_Main.Feed.Entry[i].Id;
                                 DateTime UpdateTime = Extra_Main.Feed.Entry[i].Updated + TimeSpan.FromHours(9);
                                 string Content = Extra_Main.Feed.Entry[i].Content.Text.Replace("回", "回　").Replace("\n", "　").Replace("　　", "");
@@ -127,7 +130,7 @@ namespace Telop
                                 AccessedURLs2.Add(URL);
                                 string JsonText_ExtraDetail = JsonConvert.SerializeXmlNode(XmlDocument_ExtraDetail);
                                 JObject Extra_Detail = JObject.Parse(JsonText_ExtraDetail);
-                                if (Title.Contains("気象情報") || Title == "竜巻注意情報" || Title == "全般台風情報（定型）)" || Title == "スモッグ気象情報" || Title == "記録的短時間大雨情報")
+                                if (Title.Contains("気象情報") || Title == "竜巻注意情報" || Title == "全般台風情報（定型）)" || Title == "スモッグ気象情報" || Title == "記録的短時間大雨情報" || Title == "全般台風情報（定型）")
                                     Console.WriteLine("(そのまま)");
                                 else if (Title == "指定河川洪水予報")
                                 {
@@ -191,14 +194,14 @@ namespace Telop
                                     TelopText = Text + TelopText;
                                 }
                                 else
-                                    File.WriteAllText($"Log\\UnknownInfo\\{DateTime.Now:yyyyMMddHHmmss}.txt", $"{URL}\n\n{JsonText_ExtraMain}\n\n{JsonText_ExtraDetail}");
+                                    File.WriteAllText($"Log\\UnknownInfo\\{DateTime.Now:yyyyMMddHHmmss}.txt", $"{Title}\n\n{JsonText_ExtraMain}\n\n{JsonText_ExtraDetail}");
                                 DisplayTitles.Add($"{Title}  {UpdateTime}");
                                 DisplayTexts.Add(TelopText);
                                 Console.WriteLine(Title);
-                                Console.WriteLine(TelopText); 
+                                Console.WriteLine(TelopText);
                             }
                             else
-                                    Console.WriteLine("(対象外)");
+                                Console.WriteLine("(対象外)");
                         }
                     }
                 }
@@ -211,6 +214,9 @@ namespace Telop
                 {
                     if (Title.Text != DisplayTitles[0])
                     {
+                        await ViewClose(5);
+                        await ViewOpen(5);
+                        MainText.Location = new Point(1280, MainText.Location.Y);
                         Title.Text = DisplayTitles[0];
                         MainText.Text = DisplayTexts[0];
                         SaveTitle = Title.Text;
@@ -220,12 +226,7 @@ namespace Telop
                     DisplayTexts.RemoveRange(0, 1);
                 }
                 else
-                {
-                    Title.Text = UserTitle;
-                    MainText.Text = UserText;
-                    SaveTitle = " ";
-                    SaveText = " ";
-                }
+                    UserTextChange();
                 BackColor = Color.FromArgb(0, 0, 255);
                 MainText.BackColor = BackColor;
                 Title.BackColor = Color.FromArgb(0, 0, 200);
@@ -240,9 +241,9 @@ namespace Telop
             {
                 try
                 {
-                    if (Directory.Exists("Log") == false)
+                    if (!Directory.Exists("Log"))
                         Directory.CreateDirectory("Log");
-                    if (Directory.Exists("Log\\ErrorLog") == false)
+                    if (!Directory.Exists("Log\\ErrorLog"))
                         Directory.CreateDirectory("Log\\ErrorLog");
                     string ErrorText = File.ReadAllText($"Log\\ErrorLog\\{DateTime.Now:yyyyMMdd}.txt") + "\n--------------------------------------------------\n" + ex;
                     File.WriteAllText($"Log\\ErrorLog\\{DateTime.Now:yyyyMMdd}.txt", ErrorText);
@@ -264,22 +265,19 @@ namespace Telop
             else if (MainText.Location.X <= MainText.Width * -1)//流し終了
             {
                 MainText.Location = new Point(1280, MainText.Location.Y);
-                if (UserText == "null" && TelopHide.Location.X == 1280)//流し終了
+                if (Settings.Default.IsUserText == false && TelopHide.Location.X == 1280)//流し終了
                     await ViewClose(10);
             }
         }
         public List<string> AccessedURLs1 = new List<string>();
         public List<string> AccessedURLs2 = new List<string>();
         public string NowTimeTemp = "";
-        public string UserTitle = "2021年の有感地震回数";
-        public string UserText = "1月:134回　2月:228回　3月:167回　4月:430回　5月:155回　6月:117回　7月:163回　8月:151回　9月:156回　10月:121回　11月:128回　12月:474回　合計:2424回　【震度別】1:1584回　2:605回　3:181回　4:44回　5-:4回　5+:5回　6-:0回　6+:1回　7:0回　　EEW警報:11回";
         public int RemainingDisplayNumberDefalt = -1;
         public string SaveTitle = " ";//ユーザー強制テキスト表示終了後復元用
         public string SaveText = " ";
-
+        public int UserTextInt = 0;
         public List<string> DisplayTitles = new List<string>();
         public List<string> DisplayTexts = new List<string>();
-
         private void TextChange_Tick(object sender, EventArgs e)
         {
             TextChange.Interval = 60000;
@@ -311,6 +309,8 @@ namespace Telop
         }
         public async Task ViewClose(int Delay)
         {
+            Title.Text = "";
+            MainText.Text = "";
             MainText.Location = new Point(1280, MainText.Location.Y);
             for (int i = TelopHide.Location.X; i >= 0; i -= 40)
             {
@@ -351,8 +351,6 @@ namespace Telop
                         Xml.Enabled = true;
                         if (Title.Text != UserForcedText[0] && SaveTitle != " " && Title.Text != SaveTitle)
                         {
-                            Title.Text = "";
-                            MainText.Text = "";
                             await ViewClose(5);
                             await ViewOpen(5);
                             Title.Text = SaveTitle;
@@ -363,11 +361,7 @@ namespace Telop
                             NowTime.BackColor = Color.FromArgb(0, 0, 150);
                         }
                         if (SaveTitle == "")
-                        {
-                            Title.Text = "";
-                            MainText.Text = "";
                             await ViewClose(10);
-                        }
                     }
                 }
                 else
@@ -376,6 +370,46 @@ namespace Telop
             catch
             {
 
+            }
+        }
+        public async void UserTextChange()
+        {
+            List<string> UserTitles = new List<string>();
+            List<string> UserTexts = new List<string>();
+            try
+            {
+                UserTitles = File.ReadAllText("UserTitle.txt").Split(',').ToList();
+            }
+            catch
+            {
+                File.WriteAllText("UserTitle.txt", "");
+            }
+            try
+            {
+                UserTexts = File.ReadAllText("UserText.txt").Split(',').ToList();
+            }
+            catch
+            {
+                File.WriteAllText("UserText.txt", "");
+            }
+            try
+            {
+                Title.Text = UserTitles[UserTextInt];//Replace("coron",",")
+                MainText.Text = UserTexts[UserTextInt];
+                UserTextInt++;
+            }
+            catch
+            {
+                try
+                {
+                    UserTextInt=0;
+                    Title.Text = UserTitles[0];
+                    MainText.Text = UserTexts[0];
+                }
+                catch
+                {
+                    await ViewClose(10);
+                }
             }
         }
     }
