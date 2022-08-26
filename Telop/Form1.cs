@@ -9,7 +9,6 @@ using System.Net;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Xml;
-using Telop.Properties;
 
 namespace Telop
 {
@@ -24,7 +23,6 @@ namespace Telop
             try
             {
                 Xml.Interval = 60000;
-
                 //地震火山
                 XmlDocument XmlDocument_EqVolMain = new XmlDocument();
                 XmlDocument_EqVolMain.Load("https://www.data.jma.go.jp/developer/xml/feed/eqvol.xml");
@@ -210,22 +208,26 @@ namespace Telop
                     for (int i = 20; i >= 0; i--)
                         AccessedURLs2.Add(Extra_Main.Feed.Entry[i].Id);
                 }
-                if (DisplayTitles.Count > 0)
+                if (DisplayTitles.Count > 0&&Title.Text != DisplayTitles[0])
                 {
-                    if (Title.Text != DisplayTitles[0])
-                    {
                         await ViewClose(5);
                         await ViewOpen(5);
                         Title.Text = DisplayTitles[0];
                         MainText.Text = DisplayTexts[0];
                         SaveTitle = Title.Text;
                         SaveText = MainText.Text;
-                    }
-                    DisplayTitles.RemoveRange(0, 1);
-                    DisplayTexts.RemoveRange(0, 1);
                 }
                 else
+                {
+                    if (DisplayTitles.Count > 0)
+                    {
+                        DisplayTitles.RemoveRange(0, 1);
+                        DisplayTexts.RemoveRange(0, 1);
+                    }
+                        SaveTitle = "";
+                    SaveText = "";
                     UserTextChange();
+                }
                 BackColor = Color.FromArgb(0, 0, 255);
                 MainText.BackColor = BackColor;
                 Title.BackColor = Color.FromArgb(0, 0, 200);
@@ -266,6 +268,7 @@ namespace Telop
         public int RemainingDisplayNumberDefalt = -1;
         public string SaveTitle = "";//ユーザー強制テキスト表示終了後復元用
         public string SaveText = "";
+        public string SaveUserText = "";
         public int UserTextInt = 0;
         public List<string> DisplayTitles = new List<string>();
         public List<string> DisplayTexts = new List<string>();
@@ -336,7 +339,7 @@ namespace Telop
                     {
                         LabelMove.Enabled = true;
                         Xml.Enabled = true;
-                        if (Title.Text != UserForcedText[0] && SaveTitle != "" && Title.Text != SaveTitle && SaveTitle != "UserText")
+                        if (SaveTitle != "" && Title.Text != SaveTitle)//復元
                         {
                             await ViewClose(5);
                             await ViewOpen(5);
@@ -347,9 +350,9 @@ namespace Telop
                             Title.BackColor = Color.FromArgb(0, 0, 200);
                             NowTime.BackColor = Color.FromArgb(0, 0, 150);
                         }
-                        else if (SaveTitle == "UserText")
+                        else if (SaveUserText != MainText.Text&&1==0)
                             UserTextChange();
-                        else if (SaveTitle == "")
+                        else if (SaveTitle == "" && SaveUserText == "")
                             await ViewClose(10);
                     }
                 }
@@ -363,9 +366,7 @@ namespace Telop
         }
         public async void UserTextChange()
         {
-                  SaveTitle = "UserText";//ユーザー強制テキスト表示終了後復元用
-
-        List<string> UserTexts = new List<string>();
+            List<string> UserTexts = new List<string>();
             try
             {
                 UserTexts = File.ReadAllText("UserText.txt").Split(',').ToList();
@@ -374,28 +375,44 @@ namespace Telop
             {
                 File.WriteAllText("UserText.txt", "");
             }
-            try
+
+            if (UserTexts.Count % 2 == 0)//テキストあり、偶数
             {
-                Title.Text = UserTexts[UserTextInt*2];//Replace("coron",",")
-                MainText.Text = UserTexts[UserTextInt*2+1];
-                UserTextInt++;
-                if (Title.Text == "")
-                    await ViewClose(10);
-            }
-            catch
-            {
-                try
+                try//次のユーザーテキスト
                 {
-                    UserTextInt = 0;
-                    Title.Text = UserTexts[0];
-                    MainText.Text = UserTexts[1];
-                    if (Title.Text == "")
-                        await ViewClose(10);
+                    if (Title.Text == "")//初回
+                        await ViewOpen(10);
+                    else
+                    {
+                        await ViewClose(8);
+                        await ViewOpen(8);
+                    }
+                    Title.Text = UserTexts[UserTextInt * 2];//Replace("coron",",")
+                    MainText.Text = UserTexts[UserTextInt * 2 + 1];//,が使えないので置き換え
+                    SaveUserText = UserTexts[UserTextInt * 2 + 1];
+                    UserTextInt++;
+
                 }
                 catch
                 {
-                    await ViewClose(10);
+                    try//最初に戻る
+                    {
+                        UserTextInt = 0;
+                        Title.Text = UserTexts[0];
+                        MainText.Text = UserTexts[1];
+                        SaveUserText = UserTexts[1];
+                    }
+                    catch//ユーザーテキストなし
+                    {
+                        await ViewClose(10);
+                        SaveUserText = "";
+                    }
                 }
+            }
+            else
+            {
+                await ViewClose(10);
+                SaveUserText = "";
             }
         }
     }
