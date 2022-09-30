@@ -6,18 +6,25 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.Sockets;
+using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Xml;
 
 namespace Telop
 {
-    public partial class Form1 : Form
+    public partial class Main : Form
     {
-        public Form1()
+        public Main()
         {
             InitializeComponent();
+            Task ServerOpen = Task.Run(() => { SocketServer(); });
         }
+        /// <summary>
+        /// 気象庁xmlからデータを取得します。
+        /// </summary>
         private async void Xml_Tick(object sender, EventArgs e)
         {
             try
@@ -128,7 +135,7 @@ namespace Telop
                                 AccessedURLs2.Add(URL);
                                 string JsonText_ExtraDetail = JsonConvert.SerializeXmlNode(XmlDocument_ExtraDetail);
                                 JObject Extra_Detail = JObject.Parse(JsonText_ExtraDetail);
-                                if (Title.Contains("気象情報") || Title == "竜巻注意情報" || Title == "全般台風情報（定型）)" || Title == "スモッグ気象情報" || Title == "記録的短時間大雨情報" || Title == "全般台風情報（定型）")
+                                if (Title.Contains("気象情報") || Title == "竜巻注意情報" || Title == "全般台風情報（定型）)" || Title == "スモッグ気象情報" || Title == "記録的短時間大雨情報")
                                     Console.WriteLine("(そのまま)");
                                 else if (Title == "指定河川洪水予報")
                                 {
@@ -208,30 +215,7 @@ namespace Telop
                     for (int i = 20; i >= 0; i--)
                         AccessedURLs2.Add(Extra_Main.Feed.Entry[i].Id);
                 }
-                if (DisplayTitles.Count > 0&&Title.Text != DisplayTitles[0])
-                {
-                        await ViewClose(5);
-                        await ViewOpen(5);
-                        Title.Text = DisplayTitles[0];
-                        MainText.Text = DisplayTexts[0];
-                        SaveTitle = Title.Text;
-                        SaveText = MainText.Text;
-                }
-                else
-                {
-                    if (DisplayTitles.Count > 0)
-                    {
-                        DisplayTitles.RemoveRange(0, 1);
-                        DisplayTexts.RemoveRange(0, 1);
-                    }
-                        SaveTitle = "";
-                    SaveText = "";
-                    UserTextChange();
-                }
-                BackColor = Color.FromArgb(0, 0, 255);
-                MainText.BackColor = BackColor;
-                Title.BackColor = Color.FromArgb(0, 0, 200);
-                NowTime.BackColor = Color.FromArgb(0, 0, 150);
+
             }
             catch (WebException ex)
             {
@@ -262,30 +246,57 @@ namespace Telop
             else if (MainText.Location.X <= MainText.Width * -1)//流し終了
                 MainText.Location = new Point(1280, MainText.Location.Y);
         }
+
         public List<string> AccessedURLs1 = new List<string>();
         public List<string> AccessedURLs2 = new List<string>();
         public string NowTimeTemp = "";
         public int RemainingDisplayNumberDefalt = -1;
-        public string SaveTitle = "";//ユーザー強制テキスト表示終了後復元用
-        public string SaveText = "";
-        public string SaveUserText = "";
         public int UserTextInt = 0;
         public List<string> DisplayTitles = new List<string>();
         public List<string> DisplayTexts = new List<string>();
-        private void Time_Tick(object sender, EventArgs e)
+        /// <summary>
+        /// 時計の表示・ソケット通信の接続確認をします。
+        /// </summary>
+        /// <remarks>両方0.5秒ごとに、接続確認は毎分00秒の時のみします。通信に失敗した場合クライアントの再設定を行います。</remarks>
+        private void TimeChangeSocketCheck_Tick(object sender, EventArgs e)
         {
-            NowTime.Text = DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss");
-        }
-        private void TimeCheck_Tick(object sender, EventArgs e)
-        {
-            if (NowTimeTemp == "")
-                NowTimeTemp = DateTime.Now.ToString("ss");
-            if (NowTimeTemp != DateTime.Now.ToString("ss"))
+            try
             {
-                Time.Enabled = true;
-                TimeCheck.Enabled = false;
+                NowTime.Text = DateTime.Now.ToString("HH:mm:ss");
+                NowTime.Location = new Point(1280- NowTime.Width, 0);
+                if (DateTime.Now.Second == 0)
+                {
+                    try
+                    {
+                        IPEndPoint IPEP = new IPEndPoint(IPAddress.Parse("127.0.0.1"), 31401);
+                        using (TcpClient TCPC = new TcpClient())
+                        {
+                            TCPC.Connect(IPEP);
+                            using (NetworkStream NetworkStream = TCPC.GetStream())
+                            {
+                                byte[] Bytes = new byte[4096];
+                                Bytes = Encoding.UTF8.GetBytes("Socket接続確認");
+                                NetworkStream.Write(Bytes, 0, Bytes.Length);
+                            }
+                        }
+                    }
+                    catch
+                    {
+                        Console.WriteLine("再接続");
+                        Task.Run(() => { SocketServer(); });
+                    }
+                }
+            }
+            catch
+            {
+
             }
         }
+        /// <summary>
+        /// メイン部分を表示させます。ViewCloseと統合予定です。
+        /// </summary>
+        /// <remarks>Delay:1280pxを40pxずつ動かすごとの遅延(ミリ秒)</remarks>
+        /// <param name="Delay">1280pxを40pxずつ動かすごとの遅延(ミリ秒)</param>
         public async Task ViewOpen(int Delay)
         {
             MainText.Location = new Point(1280, MainText.Location.Y);
@@ -297,6 +308,11 @@ namespace Telop
             MainText.Location = new Point(1280, MainText.Location.Y);
             return;
         }
+        /// <summary>
+        /// メイン部分を隠します。ViewOpenと統合予定です。
+        /// </summary>
+        /// <remarks>Delay:1280pxを40pxずつ動かすごとの遅延(ミリ秒)</remarks>
+        /// <param name="Delay">1280pxを40pxずつ動かすごとの遅延(ミリ秒)</param>
         public async Task ViewClose(int Delay)
         {
             Title.Text = "";
@@ -309,61 +325,10 @@ namespace Telop
             }
             return;
         }
-        private async void UserTextForced_Tick(object sender, EventArgs e)
-        {
-            UserTextForced.Interval = 1000;
-            try//タイトル,メインテキスト,固定(t/f),アニメーションティック[T](Tx32ミリ秒かかる -Tで更新のみ無効、0で最初も無効),色(R),色(G),色(B)//文字色も
-            {//TextChange
-                if (File.Exists("UserForcedText.txt"))//アニメーションは無効に
-                {
-                    string[] UserForcedText = File.ReadAllText("UserForcedText.txt").Split(',');
-                    if (UserForcedText.Length == 7)
-                    {
-                        Xml.Enabled = false;
-                        int AnimeDelay = Convert.ToInt32(UserForcedText[3]);
-                        if (UserForcedText[2] == "t")
-                        {
-                            LabelMove.Enabled = false;
-                            MainText.Location = new Point(0, MainText.Location.Y);
-                        }
-                        else
-                            LabelMove.Enabled = true;
-                        Title.Text = UserForcedText[0];
-                        MainText.Text = UserForcedText[1];
-                        BackColor = Color.FromArgb(Convert.ToInt32(UserForcedText[4]), Convert.ToInt32(UserForcedText[5]), Convert.ToInt32(UserForcedText[6]));
-                        MainText.BackColor = BackColor;
-                        Title.BackColor = Color.FromArgb(Convert.ToInt32(UserForcedText[4]), Convert.ToInt32(UserForcedText[5]), Convert.ToInt32(UserForcedText[6]));
-                        NowTime.BackColor = Color.FromArgb(Convert.ToInt32(UserForcedText[4]), Convert.ToInt32(UserForcedText[5]), Convert.ToInt32(UserForcedText[6]));
-                    }
-                    else
-                    {
-                        LabelMove.Enabled = true;
-                        Xml.Enabled = true;
-                        if (SaveTitle != "" && Title.Text != SaveTitle)//復元
-                        {
-                            await ViewClose(5);
-                            await ViewOpen(5);
-                            Title.Text = SaveTitle;
-                            MainText.Text = SaveText;
-                            BackColor = Color.FromArgb(0, 0, 255);
-                            MainText.BackColor = BackColor;
-                            Title.BackColor = Color.FromArgb(0, 0, 200);
-                            NowTime.BackColor = Color.FromArgb(0, 0, 150);
-                        }
-                        else if (SaveUserText != MainText.Text&&1==0)
-                            UserTextChange();
-                        else if (SaveTitle == "" && SaveUserText == "")
-                            await ViewClose(10);
-                    }
-                }
-                else
-                    File.WriteAllText("UserForcedText.txt", "");
-            }
-            catch
-            {
 
-            }
-        }
+        /// <summary>
+        /// データがない場合にユーザー自由テキストの切り替えをします。TextChangeと統合予定
+        /// </summary>
         public async void UserTextChange()
         {
             List<string> UserTexts = new List<string>();
@@ -387,9 +352,8 @@ namespace Telop
                         await ViewClose(8);
                         await ViewOpen(8);
                     }
-                    Title.Text = UserTexts[UserTextInt * 2];//Replace("coron",",")
-                    MainText.Text = UserTexts[UserTextInt * 2 + 1];//,が使えないので置き換え
-                    SaveUserText = UserTexts[UserTextInt * 2 + 1];
+                    Title.Text = UserTexts[UserTextInt * 2];
+                    MainText.Text = UserTexts[UserTextInt * 2 + 1];
                     UserTextInt++;
 
                 }
@@ -400,19 +364,162 @@ namespace Telop
                         UserTextInt = 0;
                         Title.Text = UserTexts[0];
                         MainText.Text = UserTexts[1];
-                        SaveUserText = UserTexts[1];
                     }
                     catch//ユーザーテキストなし
                     {
                         await ViewClose(10);
-                        SaveUserText = "";
                     }
                 }
             }
             else
             {
                 await ViewClose(10);
-                SaveUserText = "";
+            }
+        }
+        /// <summary>
+        /// ソケット通信のクライアントを設定します。
+        /// </summary>
+        /// <remarks>データ受信時にはSocketTextReceiveメゾットが呼び出されます。</remarks>
+        public void SocketServer()
+        {
+            IPEndPoint IPEP = new IPEndPoint(IPAddress.Parse("127.0.0.1"), 31401);
+            byte[] Bytes = new byte[4096];
+            Regex Regex = new Regex("\0");
+            try
+            {
+                TcpListener TCPL = new TcpListener(IPEP);
+                TCPL.Start();
+                while (true)
+                {
+                    using (TcpClient TCPC = TCPL.AcceptTcpClient())
+                    {
+                        using (NetworkStream NetworkStream = TCPC.GetStream())
+                        {
+                            if (NetworkStream.Read(Bytes, 0, Bytes.Length) != 0)
+                            {
+                                string Text = Regex.Replace(Encoding.UTF8.GetString(Bytes), "");
+                                Task.Run(() => { SocketTextReceive(Text); });
+                                Console.WriteLine(Text);
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+
+            }
+        }
+        /// <summary>
+        /// ソケット通信で受信したデータを処理します。
+        /// </summary>
+        /// <remarks>Text:受信したテキスト</remarks>
+        /// <param name="Text">受信したテキスト</param>
+        public void SocketTextReceive(string Text)
+        {
+            try//0識別ID(↓一覧),1タイトル,2本文,3タイトル時計R,4G,5B,6文字(Black/White),7本文R,8G,9B,10Black/White,
+            { //11固定(True/False),12表示時間(秒),13オプション1
+
+                string[] SocketText = Text.Split(',');
+                if (SocketText.Length != 0)
+                {
+                    if (Convert.ToInt32(SocketText[0]) == 0)
+                    {
+                        Title.Text = SocketText[1].Replace("!comma", ",");
+                        MainText.Text = SocketText[2].Replace("!comma", ",");
+                        Title.BackColor = Color.FromArgb(Convert.ToInt32(SocketText[3]), Convert.ToInt32(SocketText[4]), Convert.ToInt32(SocketText[5]));
+                        NowTime.BackColor = Title.BackColor;
+                        BackColor = Color.FromArgb(Convert.ToInt32(SocketText[7]), Convert.ToInt32(SocketText[8]), Convert.ToInt32(SocketText[9]));
+                        MainText.BackColor = BackColor;
+                        if (SocketText[6] == "White")
+                            Title.ForeColor = Color.White;
+                        else if (SocketText[6] == "Black")
+                            Title.ForeColor = Color.Black;
+                        NowTime.ForeColor = Title.ForeColor;
+                        if (SocketText[10] == "White")
+                            ForeColor = Color.White;
+                        else if (SocketText[10] == "Black")
+                            ForeColor = Color.Black;
+                        MainText.ForeColor = ForeColor;
+                        TextChangeTimer.Enabled = false;
+                        TextChangeTimer.Interval = Convert.ToInt32(SocketText[12]) * 1000;
+                        TextChangeTimer.Enabled = true;
+                        if (SocketText[11] == "True")//固定
+                        {
+                            LabelMove.Enabled = false;
+                            MainText.Location = new Point(0, MainText.Location.Y);
+                        }
+                        else
+                        {
+                            LabelMove.Enabled = true;
+                            MainText.Location = new Point(1280, MainText.Location.Y);
+
+                        }
+                    }
+
+                    if (Convert.ToInt32(SocketText[0]) == 1)
+                    {
+                        DisplayTitles.Add(SocketText[1].Replace("!comma", ","));
+                        DisplayTexts.Add(SocketText[2].Replace("!comma", ","));
+                    }
+                        
+
+
+                }
+                else
+                {
+                    if (Text == "Socket接続確認")
+                        Console.WriteLine("Socket接続は正常です。");
+                }
+
+            }
+            catch
+            {
+
+            }
+        }
+        /// <summary>
+        /// 時間でテキストの切り替えを実行します。
+        /// </summary>
+        private void TextChangeTimer_Tick(object sender, EventArgs e)
+        {
+            TextChange();
+        }
+        /// <summary>
+        /// テキストの切り替えを実行します。
+        /// </summary>
+        public async void TextChange()
+        {
+            try
+            {
+                TextChangeTimer.Interval = 60000;
+                LabelMove.Enabled = true;
+                if (DisplayTitles.Count > 0)
+                {
+                    await ViewClose(5);
+                    await ViewOpen(5);
+                    Title.Text = DisplayTitles[0];
+                    MainText.Text = DisplayTexts[0];
+                    DisplayTitles.RemoveRange(0, 1);
+                    DisplayTexts.RemoveRange(0, 1);
+                }
+                else
+                {
+                    UserTextChange();
+                }
+                BackColor = Color.FromArgb(0, 0, 250);
+                MainText.BackColor = BackColor;
+                Title.BackColor = Color.FromArgb(0, 0, 200);
+                NowTime.BackColor = Title.BackColor;
+                ForeColor = Color.White;
+                MainText.ForeColor = Color.White;
+                Title.ForeColor = Color.White;
+                NowTime.ForeColor = Color.White;
+            }
+            catch
+            {
+
             }
         }
     }

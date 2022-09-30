@@ -34,5 +34,29 @@ namespace Telop.Properties {
                 this["IsUserText"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string JmaXml_Extra_ippanho {
+            get {
+                return ((string)(this["JmaXml_Extra_ippanho"]));
+            }
+            set {
+                this["JmaXml_Extra_ippanho"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string temp {
+            get {
+                return ((string)(this["temp"]));
+            }
+            set {
+                this["temp"] = value;
+            }
+        }
     }
 }
