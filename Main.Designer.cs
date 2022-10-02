@@ -104,7 +104,7 @@
             // TextChangeTimer
             // 
             this.TextChangeTimer.Enabled = true;
-            this.TextChangeTimer.Interval = 600;
+            this.TextChangeTimer.Interval = 1000;
             this.TextChangeTimer.Tick += new System.EventHandler(this.TextChangeTimer_Tick);
             // 
             // Main
