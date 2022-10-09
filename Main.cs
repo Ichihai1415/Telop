@@ -255,6 +255,7 @@ namespace Telop
         public int UserTextInt = 0;
         public List<string> DisplayTitles = new List<string>();
         public List<string> DisplayTexts = new List<string>();
+        public string LatestSocketText = "";
         /// <summary>
         /// 時計の表示・ソケット通信の接続確認をします。
         /// </summary>
@@ -350,6 +351,7 @@ namespace Telop
                                 string Text = Regex.Replace(Encoding.UTF8.GetString(Bytes), "");
                                 Task.Run(() => { SocketTextReceive(Text); });
                                 Console.WriteLine(Text);
+                                Bytes = new byte[4096];//なんか前のが混ざるから応急
                             }
                         }
                     }
@@ -368,18 +370,18 @@ namespace Telop
         /// <param name="Text">受信したテキスト</param>
         public void SocketTextReceive(string Text)
         {
+            Console.WriteLine("Received");
             try//0識別ID(↓一覧),1タイトル,2本文,3タイトル時計R,4G,5B,6文字(Black/White),7本文R,8G,9B,10Black/White,
             { //11固定(True/False),12表示時間(秒),13表示X座標(タイトルからの相対座標は-で[※-1以下])
-                //if (InvokeRequired)
+                //if (InvokeRequired)//いらないかも？
                 {
-                    Invoke((MethodInvoker)(() => //いらないかも？
+                    Invoke((MethodInvoker)(() => 
                     {
                         string[] SocketText = Text.Split(',');
                         if (SocketText.Length != 0)
                         {
                             if (Convert.ToInt32(SocketText[0]) == 0)
                             {
-
                                 Title.Text = SocketText[1].Replace("!comma", ",");
                                 MainText.Text = SocketText[2].Replace("!comma", ",");
                                 Title.BackColor = Color.FromArgb(Convert.ToInt32(SocketText[3]), Convert.ToInt32(SocketText[4]), Convert.ToInt32(SocketText[5]));
@@ -400,20 +402,15 @@ namespace Telop
                                 try
                                 {
                                     if (Convert.ToInt32(SocketText[13]) < 0)//タイトルからの相対座標
-                                    {
                                         XPoint = Convert.ToInt32(SocketText[13]) * -1 + Title.Width;
-                                    }
                                     else
-                                    {
                                         XPoint = Convert.ToInt32(SocketText[13]);
-                                    }
                                 }
                                 catch (Exception ex)
                                 {
                                     Console.WriteLine("SocketTextReceive![13] " + ex);
                                 }
                                 Console.WriteLine("X->" + XPoint);
-
                                 if (SocketText[11] == "True")//固定
                                 {
                                     LabelMove.Enabled = false;
@@ -422,12 +419,13 @@ namespace Telop
                                 else
                                 {
                                     LabelMove.Enabled = true;
-                                    MainText.Location = new Point(1280, MainText.Location.Y);
-
+                                    if (MainText.Text != LatestSocketText)
+                                        MainText.Location = new Point(XPoint, MainText.Location.Y);
                                 }
                                 TextChangeTimer.Enabled = false;
                                 TextChangeTimer.Interval = Convert.ToInt32(SocketText[12]) * 1000;
                                 TextChangeTimer.Enabled = true;
+                                LatestSocketText = MainText.Text;
                             }
 
                             if (Convert.ToInt32(SocketText[0]) == 1)
