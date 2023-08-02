@@ -6,7 +6,9 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
 using System.Net.Sockets;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -37,15 +39,20 @@ namespace Telop
                 JMAxml_EqVol_Main.JMAXML EqVol_Main = JsonConvert.DeserializeObject<JMAxml_EqVol_Main.JMAXML>(JsonText_EqVolMain);
                 if (AccessedURLs1.Count != 0)//初回以外動作　通常!=
                 {
-                    for (int i = 10; i > 0; i--)
+                    for (int i = 10; i >= 0; i--)
                     {
+                        Console.WriteLine($"{i} {EqVol_Main.Feed.Entry[i].Title}");
+                        string URL = EqVol_Main.Feed.Entry[i].Id;
+
+                        AccessedURLs1.Add(URL);
+
                         if (AccessedURLs1.Contains(EqVol_Main.Feed.Entry[i].Id) == false)
                         {
+                            Console.WriteLine($"→new!");
                             if (EqVol_Main.Feed.Entry[i].Title.Contains("火") || EqVol_Main.Feed.Entry[i].Title.Contains("灰"))
                             {
 
                                 string Title = EqVol_Main.Feed.Entry[i].Title;
-                                string URL = EqVol_Main.Feed.Entry[i].Id;
                                 DateTime UpdateTime = EqVol_Main.Feed.Entry[i].Updated + TimeSpan.FromHours(9);
                                 string Content = EqVol_Main.Feed.Entry[i].Content.Text.Replace("回", "回　").Replace("\n", "　").Replace("　　", "");
                                 //噴火警報用
@@ -55,7 +62,6 @@ namespace Telop
                                 string TelopText = Content;
                                 XmlDocument XmlDocument_Detail = new XmlDocument();
                                 XmlDocument_Detail.Load(URL);
-                                AccessedURLs1.Add(URL);
                                 string JsonText_EqVolDetail = JsonConvert.SerializeXmlNode(XmlDocument_Detail);
                                 if (Title == "噴火に関する火山観測報")
                                 {
@@ -98,8 +104,10 @@ namespace Telop
                                 }
                                 else
                                     File.WriteAllText($"Log\\UnknownInfo\\{DateTime.Now:yyyyMMddHHmmss}.txt", $"{URL}\n\n{JsonText_EqVolMain}\n\n{JsonText_EqVolDetail}");
-                                DisplayTitles.Add($"{Title}  {UpdateTime}");
-                                DisplayTexts.Add(TelopText);
+                                DisplayTitles.Add($"{Title}");
+                                DisplayTexts.Add($"{UpdateTime}  {TelopText}");
+                                Task.Run(() => { WebHook($"__**{Title}**__ `{UpdateTime}`\n{TelopText}\n> {URL}"); });
+                                BouyomiChan($"{Title}、{TelopText}");
                             }
                         }
                     }
@@ -118,21 +126,22 @@ namespace Telop
                 {
                     for (int i = 20; i >= 0; i--)
                     {
-                        Console.WriteLine(i);
+                        Console.WriteLine($"{i} {Extra_Main.Feed.Entry[i].Title}");
                         if (AccessedURLs2.Contains(Extra_Main.Feed.Entry[i].Id) == false)
                         {
+                            Console.WriteLine($"→new!");
+                            string URL = Extra_Main.Feed.Entry[i].Id;
+                            AccessedURLs2.Add(URL);
                             string Title = Extra_Main.Feed.Entry[i].Title;
                             if (!Title.Contains("警報・注意報") && Title != "熱中症警戒アラート" && Title != "早期天候情報" && !Title.Contains("台風解析・予報情報") && Title != "竜巻注意情報（目撃情報付き）")
                             {
                                 if (Title.Contains("台風") && Title != "全般台風情報（定型）")
                                     continue;
-                                string URL = Extra_Main.Feed.Entry[i].Id;
                                 DateTime UpdateTime = Extra_Main.Feed.Entry[i].Updated + TimeSpan.FromHours(9);
                                 string Content = Extra_Main.Feed.Entry[i].Content.Text.Replace("回", "回　").Replace("\n", "　").Replace("　　", "");
                                 string TelopText = Content;
                                 XmlDocument XmlDocument_ExtraDetail = new XmlDocument();
                                 XmlDocument_ExtraDetail.Load(URL);
-                                AccessedURLs2.Add(URL);
                                 string JsonText_ExtraDetail = JsonConvert.SerializeXmlNode(XmlDocument_ExtraDetail);
                                 JObject Extra_Detail = JObject.Parse(JsonText_ExtraDetail);
                                 if (Title.Contains("気象情報") || Title == "竜巻注意情報" || Title == "全般台風情報（定型）)" || Title == "スモッグ気象情報" || Title == "記録的短時間大雨情報")
@@ -156,13 +165,13 @@ namespace Telop
                                         Kind1 = (string)Extra_Detail.SelectToken("jmx:Report.Head.Headline.Information.Item[0].Kind.Condition");
                                         if (Extra_Detail.SelectToken("jmx:Report.Head.Headline.Information.Item[0].Areas.Area.Name") == null)//地域が複数の場合
                                             for (int j = 0; j < Extra_Detail.SelectToken("jmx:Report.Head.Headline.Information.Item[0].Areas.Area").Count(); j++)
-                                                Area1 += "  " + Extra_Detail.SelectToken($"jmx:Report.Head.Headline.Information.Item[0].Areas.Area[{j}].Name") + "　";
+                                                Area1 += " " + Extra_Detail.SelectToken($"jmx:Report.Head.Headline.Information.Item[0].Areas.Area[{j}].Name") + "　";
                                         else
                                             Area1 = (string)Extra_Detail.SelectToken("jmx:Report.Head.Headline.Information.Item[0].Areas.Area.Name") + "　";
                                         Kind2 = (string)Extra_Detail.SelectToken("jmx:Report.Head.Headline.Information.Item[1].Kind.Condition");
                                         if (Extra_Detail.SelectToken("jmx:Report.Head.Headline.Information.Item[1].Areas.Area.Name") == null)//地域が複数の場合
                                             for (int j = 0; j < Extra_Detail.SelectToken("jmx:Report.Head.Headline.Information.Item[1].Areas.Area").Count(); j++)
-                                                Area2 += "  " + Extra_Detail.SelectToken($"jmx:Report.Head.Headline.Information.Item[1].Areas.Area[{j}].Name") + "　";
+                                                Area2 += " " + Extra_Detail.SelectToken($"jmx:Report.Head.Headline.Information.Item[1].Areas.Area[{j}].Name") + "　";
                                         else
                                             Area2 = (string)Extra_Detail.SelectToken("jmx:Report.Head.Headline.Information.Item[1].Areas.Area.Name") + "　";
                                         if (Extra_Detail.SelectToken("jmx:Report.Head.Headline.Information.Item[1].Kind.Condition") == null)
@@ -170,7 +179,7 @@ namespace Telop
                                             Kind3 = (string)Extra_Detail.SelectToken("jmx:Report.Head.Headline.Information.Item[2].Kind.Condition");
                                             if (Extra_Detail.SelectToken("jmx:Report.Head.Headline.Information.Item[2].Areas.Area.Name") == null)//地域が複数の場合
                                                 for (int j = 0; j < Extra_Detail.SelectToken("jmx:Report.Head.Headline.Information.Item[2].Areas.Area").Count(); j++)
-                                                    Area3 += "  " + Extra_Detail.SelectToken($"jmx:Report.Head.Headline.Information.Item[2].Areas.Area[{j}].Name") + "　";
+                                                    Area3 += " " + Extra_Detail.SelectToken($"jmx:Report.Head.Headline.Information.Item[2].Areas.Area[{j}].Name") + "　";
                                             else
                                                 Area3 = (string)Extra_Detail.SelectToken("jmx:Report.Head.Headline.Information.Item[2].Areas.Area.Name") + "　";
                                         }
@@ -185,23 +194,25 @@ namespace Telop
                                             Area1 = (string)Extra_Detail.SelectToken("jmx:Report.Head.Headline.Information.Item.Areas.Area.Name") + "　";
                                     }
                                     if (Kind1 == "発表")//発表/追加　//順番は発表、解除、継続になるように
-                                        Text += " <発表>  " + Area1;
+                                        Text += " <発表>" + Area1;
                                     if (Kind1 == "解除")//全解除
-                                        Text += " <解除>  " + Area1;
+                                        Text += " <解除>" + Area1;
                                     if (Kind2 == "解除")//一部解除/発表と解除(継続なし)
-                                        Text += " <解除>  " + Area2;
+                                        Text += " <解除>" + Area2;
                                     if (Kind3 == "解除")//追加と解除(継続あり)
-                                        Text += " <解除>  " + Area3;
+                                        Text += " <解除>" + Area3;
                                     if (Kind1 == "継続")//一部解除
-                                        Text += " <継続>  " + Area1;
+                                        Text += " <継続>" + Area1;
                                     if (Kind2 == "継続")//追加/追加と解除(継続あり)
-                                        Text += " <継続>  " + Area2;
+                                        Text += " <継続>" + Area2;
                                     TelopText = Text + TelopText;
                                 }
                                 else
                                     File.WriteAllText($"Log\\UnknownInfo\\{DateTime.Now:yyyyMMddHHmmss}.txt", $"{Title}\n\n{JsonText_ExtraMain}\n\n{JsonText_ExtraDetail}");
                                 DisplayTitles.Add($"{Title}");//一行時UpdateTimeを本文に
                                 DisplayTexts.Add($"{UpdateTime}  {TelopText}");
+                                Task.Run(() => { WebHook($"__**{Title}**__ `{UpdateTime}`\n{TelopText}\n> {URL}"); });
+                                BouyomiChan($"{Title}　{TelopText}");
                                 Console.WriteLine(Title);
                                 Console.WriteLine(TelopText);
                             }
@@ -223,6 +234,7 @@ namespace Telop
             }
             catch (Exception ex)
             {
+                Console.WriteLine(ex);
                 try
                 {
                     if (!Directory.Exists("Log"))
@@ -265,7 +277,7 @@ namespace Telop
             try
             {
                 NowTime.Text = DateTime.Now.ToString("HH:mm:ss");
-                NowTime.Location = new Point(1280- NowTime.Width, 0);
+                NowTime.Location = new Point(1280 - NowTime.Width, 0);
                 if (DateTime.Now.Second == 0)
                 {
                     try
@@ -375,7 +387,7 @@ namespace Telop
             { //11固定(True/False),12表示時間(秒),13表示X座標(タイトルからの相対座標は-で[※-1以下])
                 //if (InvokeRequired)//いらないかも？
                 {
-                    Invoke((MethodInvoker)(() => 
+                    Invoke((MethodInvoker)(() =>
                     {
                         string[] SocketText = Text.Split(',');
                         if (SocketText.Length != 0)
@@ -437,7 +449,7 @@ namespace Telop
 
 
                         }
-                        else if(Convert.ToInt32(SocketText[0]) == -99)
+                        else if (Convert.ToInt32(SocketText[0]) == -99)
                         {
                             if (Text == "-99,Socket接続確認")
                                 Console.WriteLine("Socket接続は正常です。");
@@ -515,13 +527,33 @@ namespace Telop
                             Console.WriteLine("Socket接続は正常です。");
                     }
                 }*/
-                
+
 
             }
             catch (Exception ex)
             {
                 Console.WriteLine("SocketTextReceive " + ex);
             }
+        }
+        public void WebHook(string Text)
+        {
+            if (File.Exists("webhook.txt"))
+                try
+                {
+
+                    HttpClient httpClient = new HttpClient();
+                    Dictionary<string, string> strs = new Dictionary<string, string>()
+                    {
+                        { "content", Text.Replace("****","\n") }
+                    };
+                    TaskAwaiter<HttpResponseMessage> WH = httpClient.PostAsync(File.ReadAllText("webhook.txt"), new FormUrlEncodedContent(strs)).GetAwaiter();
+                    WH.GetResult();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("webhook " + ex);
+
+                }
         }
         /// <summary>
         /// 時間でテキストの切り替えを実行します。
@@ -569,8 +601,9 @@ namespace Telop
                             UserTextInt++;
 
                         }
-                        catch
+                        catch//ちゃんとif使う
                         {
+                            Console.WriteLine("※最初に戻ります。");
                             try//最初に戻る
                             {
                                 UserTextInt = 0;
@@ -597,9 +630,43 @@ namespace Telop
                 Title.ForeColor = Color.White;
                 NowTime.ForeColor = Color.White;
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 Console.WriteLine("TextChangeTimer_Tick " + ex);
+            }
+        }
+        /// <summary>
+        /// 棒読みちゃんにTCP接続で送信します。
+        /// </summary>
+        /// <param name="Text">読み上げるテキスト。</param>
+        public void BouyomiChan(string Text)
+        {
+            try
+            {
+                byte[] Message = Encoding.UTF8.GetBytes(Text);
+                int Length = Message.Length;
+                byte Code = 0;
+                short Command = 0x0001;
+                short Speed = 150;
+                short Tone = 100;
+                short Volume = 100;
+                short Voice = 2;
+                using (TcpClient TcpClient = new TcpClient("127.0.0.1", 50001))
+                using (NetworkStream NetworkStream = TcpClient.GetStream())
+                using (BinaryWriter BinaryWriter = new BinaryWriter(NetworkStream))
+                {
+                    BinaryWriter.Write(Command);
+                    BinaryWriter.Write(Speed);
+                    BinaryWriter.Write(Tone);
+                    BinaryWriter.Write(Volume);
+                    BinaryWriter.Write(Voice);
+                    BinaryWriter.Write(Code);
+                    BinaryWriter.Write(Length);
+                    BinaryWriter.Write(Message);
+                }
+            }
+            catch
+            {
             }
         }
     }
