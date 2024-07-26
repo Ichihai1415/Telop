@@ -643,7 +643,7 @@ namespace Telop
         {
             try
             {
-                byte[] Message = Encoding.UTF8.GetBytes(Text);
+                byte[] Message = Encoding.UTF8.GetBytes(Text.Replace("を上回　る", "を上回る"));//指定河川洪水予報読み上げおかしい問題仮対処
                 int Length = Message.Length;
                 byte Code = 0;
                 short Command = 0x0001;
