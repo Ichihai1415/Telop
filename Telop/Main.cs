@@ -643,7 +643,19 @@ namespace Telop
         {
             try
             {
-                byte[] Message = Encoding.UTF8.GetBytes(Text.Replace("を上回　る", "を上回る").Replace("を下回　る", "を下回る"));//指定河川洪水予報読み上げおかしい問題仮対処
+                /*
+                 [2024/09/30(月) 01:53:02.399] - エラー
+タスクエラー
+文節分解・漢字変換でエラー
+府県気象情報　【大雨に関する和歌山県気象情報】土砂災害の危険度が当初の予想を大幅に上回　って急激に高まっています。新宮・東牟婁を中心に、命に危険を及ぼす土砂災害がいつ発生してもおかしくない危険な状況となっています。土砂災害警戒区域等にいる方は、近くの安全な場所や屋内の安全な場所に避難するなど、迷うことなく適切な防災行動をとってください。南部では、３０日明け方にかけて土砂災害に厳重に警戒してください。河川の増水や氾濫に警戒してください。
+府県気象情報　【大雨に関する和歌山県気象情報】土砂災害の危険度が当初の予想を大幅に上回　って急激に高まっています。新宮・東牟婁を中心に、命に危険を及ぼす土砂災害がいつ発生してもおかしくない危険な状況となっています。土砂災害警戒区域等にいる方は、近くの安全な場所や屋内の安全な場所に避難するなど、迷うことなく適切な防災行動をとってください。南部では、30日明け方にかけて土砂災害に厳重に警戒してください。河川の増水や氾濫に警戒してください。
+System.Runtime.InteropServices.COMException (0x80004005): MS-IMEでの再変換に失敗しました
+   場所 FNF.Utility.MsImeAnalyzer.Analyze(String sText)
+   場所 FNF.Utility.BouyomiChan.ConvertToSplitText_NEW(StringBuilder src)
+   場所 FNF.Utility.BouyomiChan.ConvertToSplitText_(StringBuilder src)
+   場所 FNF.Utility.BouyomiChan.TalkTaskThreadFunc()
+                 */
+                byte[] Message = Encoding.UTF8.GetBytes(Text.Replace("回　", "回"));//指定河川洪水予報・特殊な気象情報(↑)読み上げおかしい問題仮対処
                 int Length = Message.Length;
                 byte Code = 0;
                 short Command = 0x0001;
